@@ -30,13 +30,25 @@ def load_local_module(module_path):
     """
     module_name = os.path.splitext(os.path.basename(module_path))[0]
 
-    if os.path.isdir(module_path):
-        # If it's a directory, look for __init__.py to treat it as a package
+    # Check if the directory contains pyproject.toml, setup.py, or setup.cfg
+    if os.path.isdir(module_path) and any(
+        os.path.exists(os.path.join(module_path, f))
+        for f in ["pyproject.toml", "setup.py", "setup.cfg"]
+    ):
+        # Treat as a project root and install the package without requiring __init__.py
+        logger.info(
+            f"Detected Python project at {module_path}. Installing it as a package."
+        )
+        temp_env.install_package_in_virtualenv(module_path)
+        return importlib.import_module(module_name)
+
+    # If it's a directory but not a recognized project root, check for __init__.py
+    elif os.path.isdir(module_path):
         init_file = os.path.join(module_path, "__init__.py")
         if not os.path.exists(init_file):
             raise ImportError(f"No __init__.py found in directory {module_path}.")
-        module_name = os.path.basename(module_path)
         spec = importlib.util.spec_from_file_location(module_name, init_file)
+
     else:
         # Load from a single Python file
         spec = importlib.util.spec_from_file_location(module_name, module_path)
@@ -104,7 +116,7 @@ def main():
         temp_env.create_persistent_virtual_env()
         install_local_dependencies(os.path.dirname(args.module))
 
-        # Load the local module
+        # Load the local module or project
         try:
             module = load_local_module(args.module)
             api_structure = extract_api_from_module(
