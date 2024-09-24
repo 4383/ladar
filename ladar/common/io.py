@@ -60,3 +60,8 @@ def save_file(filename, content):
         dispatch[extension](filename, content)
     else:
         raise ValueError(f"Unsupported file format: {extension}")
+
+
+def save(filename, content):
+    """alias for `save_file`"""
+    save_file(filename, content)
