@@ -1,6 +1,7 @@
 import argparse
 import importlib.util
 import json
+import logging
 import os
 import pkgutil
 import sys
@@ -11,6 +12,10 @@ import yaml
 import ladar.common.venv as temp_env
 from ladar.common.io import save
 from ladar.designer.api import analyze_stdlib, extract_api_from_module
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def load_local_module(module_path):
@@ -45,6 +50,32 @@ def load_local_module(module_path):
     return module
 
 
+def install_local_dependencies(module_path):
+    """
+    Install dependencies from a local module's requirements.txt or pyproject.toml.
+
+    Args:
+        module_path (str): The path to the local module or package.
+
+    Raises:
+        RuntimeError: If the virtual environment has not been created yet.
+    """
+    requirements_file = os.path.join(module_path, "requirements.txt")
+    pyproject_file = os.path.join(module_path, "pyproject.toml")
+
+    # Install dependencies from requirements.txt if it exists
+    if os.path.exists(requirements_file):
+        logger.info(f"Installing dependencies from {requirements_file}.")
+        temp_env.install_package_in_virtualenv(f"-r {requirements_file}")
+    # Install dependencies from pyproject.toml if it exists
+    elif os.path.exists(pyproject_file):
+        logger.info(f"Installing dependencies from {pyproject_file}.")
+        # Assuming the project uses PEP 517 and has dependencies specified
+        temp_env.install_package_in_virtualenv(".")  # Install the whole package
+    else:
+        logger.info("No dependency file found (requirements.txt or pyproject.toml).")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Extract the API from a Python library or the standard library."
@@ -69,7 +100,11 @@ def main():
         # Analyze the standard library
         api_structure = analyze_stdlib(include_private=args.include_private)
     elif os.path.exists(args.module):
-        # Load a local module from a file or directory
+        # Create a virtual environment and install local module dependencies
+        temp_env.create_persistent_virtual_env()
+        install_local_dependencies(os.path.dirname(args.module))
+
+        # Load the local module
         try:
             module = load_local_module(args.module)
             api_structure = extract_api_from_module(
@@ -97,7 +132,3 @@ def main():
         print(f"API saved to {args.output}")
     except ValueError as e:
         print(f"Error saving file: {e}")
-
-
-if __name__ == "__main__":
-    main()
