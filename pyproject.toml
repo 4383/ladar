@@ -40,8 +40,8 @@ Sponsor = "https://github.com/sponsors/4383"
 Tracker = "https://github.com/4383/ladar/issues"
 Source = "https://github.com/4383/ladar"
 
-#[project.scripts]
-#ladar = "ladar.clien:client"
+[project.scripts]
+ladar-api = "ladar.api_scanner:main"
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pip-tools", "build", "twine", "pre-commit", "commitizen"]
