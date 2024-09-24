@@ -31,7 +31,7 @@ classifiers = [
     "Topic :: Sociology",
 ]
 dynamic = ["version"]
-#dependencies = [""]
+dependencies = ["toml==0.10.2", "pyyaml==6.0.2"]
 
 [project.urls]
 Homepage = "https://github.com/4383/ladar"
@@ -52,3 +52,6 @@ exclude = "tests*"
 
 [tool.hatch]
 version.source = "vcs"
+
+[tool.isort]
+profile = "black"
