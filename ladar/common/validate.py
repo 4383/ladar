@@ -7,173 +7,127 @@ import toml
 import yaml
 
 
-# Validation des différents formats
+# Validation of different formats
 def validate_text(content):
-    """Valide que le contenu est du texte brut valide (non vide)"""
+    """Validates that the content is valid plain text (non-empty)"""
     if not isinstance(content, str) or not content.strip():
-        raise ValueError("Le contenu texte est vide ou invalide.")
+        raise ValueError("The text content is empty or invalid.")
     return True
 
 
 def validate_markdown(content):
-    """Valide que le contenu est du markdown basique (syntaxe minimalement valide)"""
+    """Validates that the content is basic markdown (minimally valid syntax)"""
     if not isinstance(content, str):
-        raise ValueError("Markdown invalide")
-    # Vérification de quelques balises markdown courantes
+        raise ValueError("Invalid Markdown")
+    # Check for some common markdown tags
     if not re.search(r"(^#+\s+|[*_]{1,2}.+[*_]{1,2})", content):
-        raise ValueError("Markdown minimalement invalide")
+        raise ValueError("Minimally invalid Markdown")
     return True
 
 
 def validate_python(content):
-    """Valide que le contenu est un code Python syntaxiquement valide"""
+    """Validates that the content is syntactically valid Python code"""
     try:
         ast.parse(content)
     except SyntaxError as e:
-        raise ValueError(f"Python invalide : {e}")
+        raise ValueError(f"Invalid Python: {e}")
     return True
 
 
 def validate_toml(content):
-    """Valide que le contenu est un TOML valide"""
+    """Validates that the content is valid TOML"""
     try:
         toml.loads(content)
     except toml.TomlDecodeError as e:
-        raise ValueError(f"TOML invalide : {e}")
+        raise ValueError(f"Invalid TOML: {e}")
     return True
 
 
 def validate_yaml(content):
-    """Valide que le contenu est un YAML valide"""
+    """Validates that the content is valid YAML"""
     try:
         yaml.safe_load(content)
     except yaml.YAMLError as e:
-        raise ValueError(f"YAML invalide : {e}")
+        raise ValueError(f"Invalid YAML: {e}")
     return True
 
 
 def validate_json(content):
-    """Valide que le contenu est un JSON valide"""
+    """Validates that the content is valid JSON"""
     try:
         json.loads(content)
     except json.JSONDecodeError as e:
-        raise ValueError(f"JSON invalide : {e}")
+        raise ValueError(f"Invalid JSON: {e}")
     return True
 
 
 def validate_xml(content):
-    """Valide que le contenu est un XML valide"""
+    """Validates that the content is valid XML"""
     try:
         ET.fromstring(content)
     except ET.ParseError as e:
-        raise ValueError(f"XML invalide : {e}")
-    return True
-
-
-def validate_rust(content):
-    """Valide que le contenu est un code Rust basiquement valide (fonction main présente)"""
-    if "fn main()" not in content:
-        raise ValueError("Rust invalide : fn main() non trouvé")
-    return True
-
-
-def validate_sql(content):
-    """Valide que le contenu est une commande SQL basique (syntaxe de base)"""
-    if not re.search(
-        r"^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP)\s+", content, re.IGNORECASE
-    ):
-        raise ValueError("SQL invalide : commande SQL de base non trouvée")
+        raise ValueError(f"Invalid XML: {e}")
     return True
 
 
 def validate_rst(content):
-    """Valide que le contenu est du reStructuredText basiquement valide"""
+    """Validates that the content is basic valid reStructuredText"""
     if not re.search(r'^[=\-`:\'"~^_*+#<>]+$', content, re.MULTILINE):
-        raise ValueError("reStructuredText invalide")
+        raise ValueError("Invalid reStructuredText")
     return True
 
 
-def validate_javascript(content):
-    """Valide que le contenu est du JavaScript basiquement valide (syntaxe de base)"""
-    if not re.search(r"\bfunction\b|\bvar\b|\bconst\b|\blet\b", content):
-        raise ValueError("JavaScript invalide : éléments de base non trouvés")
-    return True
-
-
-# Dispatch des formats
+# Format dispatch
 def detect_and_validate(content):
-    """Détecte le format et valide le contenu"""
+    """Detects the format and validates the content"""
     if isinstance(content, str):
         content = content.strip()
 
     if not content:
-        raise ValueError("Le contenu est vide.")
+        raise ValueError("The content is empty.")
 
-    # Vérifier si le contenu est JSON
+    # Check if the content is JSON
     try:
         json.loads(content)
         return validate_json(content)
     except json.JSONDecodeError:
         pass
 
-    # Vérifier si le contenu est YAML
+    # Check if the content is YAML
     try:
         yaml.safe_load(content)
         return validate_yaml(content)
     except yaml.YAMLError:
         pass
 
-    # Vérifier si le contenu est TOML
+    # Check if the content is TOML
     try:
         toml.loads(content)
         return validate_toml(content)
     except toml.TomlDecodeError:
         pass
 
-    # Vérifier si le contenu est XML
+    # Check if the content is XML
     try:
         ET.fromstring(content)
         return validate_xml(content)
     except ET.ParseError:
         pass
 
-    # Vérifier si le contenu est Python
+    # Check if the content is Python
     try:
         ast.parse(content)
         return validate_python(content)
     except SyntaxError:
         pass
 
-    # Vérifier si le contenu est Markdown
+    # Check if the content is Markdown
     if re.search(r"(^#+\s+|[*_]{1,2}.+[*_]{1,2})", content):
         return validate_markdown(content)
 
-    # Vérifier si le contenu est du Rust
-    if "fn main()" in content:
-        return validate_rust(content)
-
-    # Vérifier si le contenu est du SQL
-    if re.search(
-        r"^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP)\s+", content, re.IGNORECASE
-    ):
-        return validate_sql(content)
-
-    # Vérifier si le contenu est du reStructuredText
+    # Check if the content is reStructuredText
     if re.search(r'^[=\-`:\'"~^_*+#<>]+$', content, re.MULTILINE):
         return validate_rst(content)
 
-    # Vérifier si le contenu est du JavaScript
-    if re.search(r"\bfunction\b|\bvar\b|\bconst\b|\blet\b", content):
-        return validate_javascript(content)
-
-    # Si aucun format spécifique n'est détecté, on considère que c'est du texte brut
+    # If no specific format is detected, consider it plain text
     return validate_text(content)
-
-
-# Exemple d'utilisation
-try:
-    content = "# Markdown Example\n\nThis is a simple markdown."
-    detect_and_validate(content)
-    print("Contenu valide.")
-except ValueError as e:
-    print(e)
