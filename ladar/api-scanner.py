@@ -10,12 +10,12 @@ import yaml
 
 
 def is_async_function(member):
-    """Détecter si une fonction ou méthode est asynchrone."""
+    """Detect if a function or method is asynchronous."""
     return inspect.iscoroutinefunction(member) or inspect.isasyncgenfunction(member)
 
 
 def extract_api_from_module(module, include_private=False):
-    """Extraire les fonctions, classes et signatures d'un module donné."""
+    """Extract functions, classes, and signatures from a given module."""
     api_structure = {}
 
     def explore_members(members, parent_name="", visited=None):
@@ -28,7 +28,7 @@ def extract_api_from_module(module, include_private=False):
 
             full_name = f"{parent_name}.{name}" if parent_name else name
 
-            # Éviter la récursion infinie en vérifiant si le membre a déjà été visité
+            # Avoid infinite recursion by checking if the member has already been visited
             if id(member) in visited:
                 continue
             visited.add(id(member))
@@ -37,7 +37,7 @@ def extract_api_from_module(module, include_private=False):
                 try:
                     signature = str(inspect.signature(member))
                 except (ValueError, TypeError):
-                    signature = "N/A"  # Signature non disponible
+                    signature = "N/A"  # Signature not available
                 function_type = (
                     "async function" if is_async_function(member) else "function"
                 )
@@ -48,14 +48,14 @@ def extract_api_from_module(module, include_private=False):
 
             elif inspect.isclass(member):
                 api_structure[full_name] = {"type": "class", "members": {}}
-                # Explorer les méthodes des classes
+                # Explore class methods
                 class_members = inspect.getmembers(member)
                 for method_name, method in class_members:
                     if inspect.isfunction(method) or inspect.ismethod(method):
                         try:
                             signature = str(inspect.signature(method))
                         except (ValueError, TypeError):
-                            signature = "N/A"  # Signature non disponible
+                            signature = "N/A"  # Signature not available
                         method_type = (
                             "async method" if is_async_function(method) else "method"
                         )
@@ -74,10 +74,10 @@ def extract_api_from_module(module, include_private=False):
 
 
 def analyze_stdlib(include_private=False):
-    """Analyser la bibliothèque standard Python et extraire l'API."""
+    """Analyze the Python standard library and extract the API."""
     stdlib_api = {}
 
-    # Utiliser sys.stdlib_module_names pour Python 3.10+, sinon pkgutil.iter_modules
+    # Use sys.stdlib_module_names for Python 3.10+, otherwise pkgutil.iter_modules
     stdlib_modules = (
         sys.stdlib_module_names
         if hasattr(sys, "stdlib_module_names")
@@ -96,7 +96,7 @@ def analyze_stdlib(include_private=False):
 
 
 def save_output(api_structure, output_file, format_type):
-    """Sauvegarder la structure API dans un fichier (TOML, YAML, JSON)."""
+    """Save the API structure to a file (TOML, YAML, JSON)."""
     with open(output_file, "w") as f:
         if format_type == "toml":
             toml.dump(api_structure, f)
@@ -105,51 +105,51 @@ def save_output(api_structure, output_file, format_type):
         elif format_type == "json":
             json.dump(api_structure, f, indent=4)
         else:
-            raise ValueError(f"Format de fichier non supporté: {format_type}")
+            raise ValueError(f"Unsupported file format: {format_type}")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extraire l'API d'une bibliothèque Python ou de la bibliothèque standard."
+        description="Extract the API from a Python library or the standard library."
     )
     parser.add_argument(
         "--module",
-        help="Nom du module à analyser, ou 'stdlib' pour analyser la bibliothèque standard",
+        help="Name of the module to analyze, or 'stdlib' to analyze the standard library",
     )
     parser.add_argument(
-        "--output", required=True, help="Fichier de sortie (toml, yaml, json)"
+        "--output", required=True, help="Output file (toml, yaml, json)"
     )
     parser.add_argument(
         "--include-private",
         action="store_true",
-        help="Inclure les membres privés dans l'analyse",
+        help="Include private members in the analysis",
     )
 
     args = parser.parse_args()
 
-    # Déterminer le format de sortie
+    # Determine the output format
     output_ext = args.output.split(".")[-1].lower()
 
     if args.module == "stdlib":
-        # Analyser la bibliothèque standard
+        # Analyze the standard library
         api_structure = analyze_stdlib(include_private=args.include_private)
     else:
-        # Charger le module spécifié
+        # Load the specified module
         try:
             module = __import__(args.module)
             api_structure = extract_api_from_module(
                 module, include_private=args.include_private
             )
         except ImportError as e:
-            print(f"Erreur lors de l'importation du module {args.module}: {e}")
+            print(f"Error importing module {args.module}: {e}")
             return
 
-    # Sauvegarder l'API dans le fichier spécifié
+    # Save the API to the specified file
     try:
         save_output(api_structure, args.output, output_ext)
-        print(f"API sauvegardée dans {args.output}")
+        print(f"API saved to {args.output}")
     except ValueError as e:
-        print(f"Erreur lors de la sauvegarde du fichier: {e}")
+        print(f"Error saving file: {e}")
 
 
 if __name__ == "__main__":
