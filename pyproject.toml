@@ -39,7 +39,7 @@ Tracker = "https://github.com/4383/ladar/issues"
 Source = "https://github.com/4383/ladar"
 
 [project.scripts]
-ladar-api = "ladar.api_scanner:main"
+ladar = "ladar.main:main"
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pip-tools", "build", "twine", "pre-commit", "commitizen"]
