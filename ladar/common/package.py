@@ -28,7 +28,7 @@ def load_local_module(module_path):
         for f in ["pyproject.toml", "setup.py", "setup.cfg"]
     ):
         # Treat as a project root and install the package without requiring __init__.py
-        logger.info(
+        logger.debug(
             f"Detected Python project at {module_path}. Installing it as a package."
         )
         temp_env.install_package_in_virtualenv(module_path)
@@ -70,11 +70,11 @@ def install_local_dependencies(module_path):
 
     # Install dependencies from requirements.txt if it exists
     if os.path.exists(requirements_file):
-        logger.info(f"Installing dependencies from {requirements_file}.")
+        logger.debug(f"Installing dependencies from {requirements_file}.")
         temp_env.install_package_in_virtualenv(f"-r {requirements_file}")
     # Install dependencies from pyproject.toml if it exists
     elif os.path.exists(pyproject_file):
-        logger.info(f"Installing dependencies from {pyproject_file}.")
+        logger.debug(f"Installing dependencies from {pyproject_file}.")
         temp_env.install_package_in_virtualenv(".")  # Install the whole package
     else:
-        logger.info("No dependency file found (requirements.txt or pyproject.toml).")
+        logger.debug("No dependency file found (requirements.txt or pyproject.toml).")

@@ -5,9 +5,9 @@ import os
 import ladar.common.venv as temp_env
 from ladar.common.io import save
 from ladar.common.package import install_local_dependencies, load_local_module
+from ladar.common.ui import run_with_progress  # Import the progress wrapper
 from ladar.designer.api import analyze_stdlib, extract_api_from_module
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -27,7 +27,13 @@ def add_arguments(parser):
 
 def main(args):
     if args.module == "stdlib":
-        api_structure = analyze_stdlib(include_private=args.include_private)
+        api_structure = run_with_progress(
+            analyze_stdlib,
+            include_private=args.include_private,
+            description="Analyzing stdlib",
+            total_steps=50,
+            verbose=args.verbose,
+        )
     elif os.path.exists(args.module):
         temp_env.create_persistent_virtual_env()
         install_local_dependencies(os.path.dirname(args.module))
@@ -43,7 +49,12 @@ def main(args):
     else:
         try:
             env_dir = temp_env.create_persistent_virtual_env()
-            temp_env.install_package_in_virtualenv(args.module)
+            run_with_progress(
+                temp_env.install_package_in_virtualenv,
+                args.module,
+                description=f"Installing {args.module}",
+                verbose=args.verbose,
+            )
             module = __import__(args.module)
             api_structure = extract_api_from_module(
                 module, include_private=args.include_private
@@ -54,6 +65,6 @@ def main(args):
 
     try:
         save(args.output, api_structure)
-        print(f"API saved to {args.output}")
+        logger.info(f"API saved to {args.output}")
     except ValueError as e:
         logger.error(f"Error saving file: {e}")

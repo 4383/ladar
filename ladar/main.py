@@ -1,8 +1,11 @@
 import argparse
 import importlib
+import logging
 import pkgutil
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def discover_commands():
@@ -21,6 +24,12 @@ def main():
         prog="ladar", description="Ladar command-line tool"
     )
 
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output and debugging logs",
+    )
+
     # Découverte automatique des sous-commandes
     commands = discover_commands()
 
@@ -35,6 +44,12 @@ def main():
 
     # Parse les arguments
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO)
+    # Configure logging level based on verbosity
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+        logger.debug("Verbose mode enabled, logging set to DEBUG")
 
     if args.command in commands:
         # Exécution dynamique de la sous-commande

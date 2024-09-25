@@ -36,7 +36,7 @@ def create_persistent_virtual_env():
     if _temp_dir is None:
         _temp_dir = tempfile.mkdtemp()  # Create a temporary directory for the venv
         venv.create(_temp_dir, with_pip=True)  # Create the virtual environment
-        logger.info(f"Persistent virtual environment created in {_temp_dir}.")
+        logger.debug(f"Persistent virtual environment created in {_temp_dir}.")
         # Add the venv's site-packages to sys.path
         add_venv_to_syspath(_temp_dir)
     return _temp_dir
@@ -74,7 +74,7 @@ def add_venv_to_syspath(env_dir):
 
     # Insert site-packages at the beginning of sys.path
     sys.path.insert(0, site_packages)
-    logger.info(f"Added {site_packages} to sys.path")
+    logger.debug(f"Added {site_packages} to sys.path")
 
 
 def install_package_in_virtualenv(package):
@@ -104,7 +104,7 @@ def install_package_in_virtualenv(package):
     try:
         # Run pip install command
         subprocess.check_call([python_executable, "-m", "pip", "install", package])
-        logger.info(f"{package} successfully installed in the virtual environment.")
+        logger.debug(f"{package} successfully installed in the virtual environment.")
     except subprocess.CalledProcessError:
         logger.error(f"Failed to install {package} in the virtual environment.")
         raise
@@ -141,5 +141,5 @@ def clean_up():
     global _temp_dir
     if _temp_dir is not None:
         shutil.rmtree(_temp_dir)  # Remove the directory
-        logger.info(f"Persistent virtual environment removed: {_temp_dir}")
+        logger.debug(f"Persistent virtual environment removed: {_temp_dir}")
         _temp_dir = None
