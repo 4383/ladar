@@ -2,6 +2,7 @@ import argparse
 import importlib
 import logging
 import os
+import sys
 
 import ladar.common.venv as temp_env
 from ladar.common.io import save
@@ -114,52 +115,58 @@ def ensure_legacy_compatibility_enabled(legacy_compatibility=False):
 
 def main(args):
     if args.module == "stdlib":
+        logger.info("Analyzing the entire standard library (stdlib).")
         api_structure = run_with_progress(
             analyze_stdlib,
             include_private=args.include_private,
-            description="Analyzing stdlib",
-            total_steps=50,
+            description="Analyzing all standard library modules",
+            total_steps=100,
         )
-    elif os.path.exists(args.module):
-        temp_env.create_persistent_virtual_env()
-        install_local_dependencies(os.path.dirname(args.module))
-        try:
-            module_name = load_local_module(args.module)
-            module = importlib.import_module(module_name)
-            api_structure = extract_api_from_module(
-                module, include_private=args.include_private
-            )
-        except ImportError as e:
-            logger.error(f"Error loading local module from {args.module}: {e}")
-            return
     else:
         try:
-            # Create the virtual environment with the specified Python version (if provided)
-            temp_env.create_persistent_virtual_env()
-
-            # Ensure legacy compatibility is enabled if required
-            ensure_legacy_compatibility_enabled(
-                legacy_compatibility=args.enable_legacy_compatibility
-            )
-
-            # Handle versioning if specified
-            if args.version:
-                module_with_version = f"{args.module}=={args.version}"
+            if (
+                args.module in sys.builtin_module_names
+                or args.module in sys.stdlib_module_names
+            ):
+                logger.info(f"Analyzing stdlib module: {args.module}")
+                module = __import__(args.module)
+                api_structure = extract_api_from_module(
+                    module, include_private=args.include_private
+                )
+            elif os.path.exists(args.module):
+                temp_env.create_persistent_virtual_env()
+                install_local_dependencies(os.path.dirname(args.module))
+                try:
+                    module_name = load_local_module(args.module)
+                    module = importlib.import_module(module_name)
+                    api_structure = extract_api_from_module(
+                        module, include_private=args.include_private
+                    )
+                except ImportError as e:
+                    logger.error(f"Error loading local module from {args.module}: {e}")
+                    return
             else:
-                module_with_version = args.module
+                temp_env.create_persistent_virtual_env()
 
-            # Install the specified module with the version (if any)
-            run_with_progress(
-                temp_env.install_package_in_virtualenv,
-                module_with_version,
-                description=f"Installing {module_with_version}",
-            )
+                ensure_legacy_compatibility_enabled(
+                    legacy_compatibility=args.enable_legacy_compatibility
+                )
 
-            # Import and extract API from the installed module
-            module = __import__(args.module)
-            api_structure = extract_api_from_module(
-                module, include_private=args.include_private
-            )
+                if args.version:
+                    module_with_version = f"{args.module}=={args.version}"
+                else:
+                    module_with_version = args.module
+
+                run_with_progress(
+                    temp_env.install_package_in_virtualenv,
+                    module_with_version,
+                    description=f"Installing {module_with_version}",
+                )
+
+                module = __import__(args.module)
+                api_structure = extract_api_from_module(
+                    module, include_private=args.include_private
+                )
         except ImportError as e:
             logger.error(f"Error importing module {args.module}: {e}")
             return
