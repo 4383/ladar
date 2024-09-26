@@ -3,6 +3,7 @@ import importlib
 import logging
 import os
 import sys
+import textwrap
 
 import ladar.common.venv as temp_env
 from ladar.common.io import save
@@ -13,35 +14,52 @@ from ladar.designer.api import analyze_stdlib, extract_api_from_module
 logger = logging.getLogger(__name__)
 
 
-command_description = "Extract and save the API structure of a Python module."
-long_descrption = """
-The 'api' command is designed to analyze the API of a specified Python module,
-whether it's a third-party package, a local project, or even the Python standard
-library (stdlib).
+command_description = """
+Extract and save the API structure of a Python module, including standard library modules.
+"""
+long_description = """
+The 'api' command analyzes the API of a specified Python module or a module from the
+Python standard library (stdlib).
 
-It extracts the structure of the API, including functions, classes, and other members,
-and saves this information in a specified output file (in TOML, YAML, or JSON format).
+You can specify a third-party package, a local project, or a standard library module for analysis.
+If 'stdlib' is passed as the module, the entire Python standard library will be analyzed.
+Otherwise, you can analyze individual standard library modules (e.g., 'asyncio', 'http')
+or third-party packages (e.g, 'requests', 'eventlet', 'flask').
 
-The command is useful for generating a snapshot of a module's API, whether for
-documentation purposes, code auditing, or ensuring compatibility across versions.
-By default, the command analyzes only public members, but you can include private
-members if needed. Additionally, for older modules that require older versions of
-setuptools or distutils, you can enable a legacy compatibility mode to handle such
-dependencies.
+The extracted API includes functions, classes, and other members, and is saved to a
+specified output file (in TOML, YAML, or JSON format).
+
+By default, only public members are included, but you can opt to include private members.
+Additionally, for older modules that require legacy support, a compatibility mode is available.
 """
 
 
 def add_arguments(parser):
-
     parser.formatter_class = argparse.RawTextHelpFormatter
-    parser.description = long_descrption
+    parser.description = long_description
 
     parser.add_argument(
         "--module",
         help=(
-            "Specify the name of the module to analyze or the path to a local module. "
-            "If analyzing a third-party module, the module will be automatically installed "
-            "in a virtual environment. If 'stdlib' is provided, the standard library will be analyzed."
+            textwrap.dedent(
+                """\
+            Specify the module to analyze. The following types of values can be passed:
+            1. A standard library module name (e.g., 'asyncio', 'http', 'pathlib'):
+            This will analyze only the specified module from the Python standard library.
+            2. 'stdlib': This will trigger the analysis of the entire Python standard library,
+            extracting API details from all standard library modules.
+            3. The name of a third-party module: The module will be automatically installed
+            in a virtual environment, and its API will be analyzed. Optionally, you can specify
+            the version of the module using the '--version' option.
+            4. The path to a local Python project or module: This allows you to analyze a local
+            Python project by providing its file path. The API structure of the local module will be extracted.
+            Examples:
+              --module asyncio          # Analyze the 'asyncio' module from the stdlib
+              --module stdlib           # Analyze the entire standard library
+              --module requests         # Analyze the 'requests' third-party module
+              --module /path/to/module  # Analyze a local Python project"
+        """
+            )
         ),
     )
     parser.add_argument(
@@ -71,10 +89,14 @@ def add_arguments(parser):
     parser.add_argument(
         "--enable-legacy-compatibility",
         action="store_true",
-        help=(
-            "Enable legacy compatibility mode for older packages that may require older versions of setuptools and distutils. "
-            "When enabled, the necessary tools for legacy support will be installed in the virtual environment. "
-            "This is useful for older packages that may not be compatible with modern versions of Python."
+        help=textwrap.dedent(
+            (
+                """\
+            Enable legacy compatibility mode for older packages that may require older versions of setuptools and distutils.
+            When enabled, the necessary tools for legacy support will be installed in the virtual environment.
+            This is useful for older packages that may not be compatible with modern versions of Python.
+        """
+            )
         ),
     )
 
