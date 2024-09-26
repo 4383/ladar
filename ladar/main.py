@@ -17,9 +17,10 @@ def configure_logging(verbosity_level):
         logging.basicConfig(level=logging.WARNING)
     elif verbosity_level == 1:
         logging.basicConfig(level=logging.INFO)
+        logger.info("Logging verbosity set INFO")
     elif verbosity_level >= 2:
         logging.basicConfig(level=logging.DEBUG)
-    logger.debug(f"Verbosity level set to {logging.getLevelName(logger.level)}")
+        logger.debug("Logging verbosity set DEBUG")
 
 
 def discover_commands():
