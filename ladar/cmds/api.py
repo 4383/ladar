@@ -32,7 +32,6 @@ def main(args):
             include_private=args.include_private,
             description="Analyzing stdlib",
             total_steps=50,
-            verbose=args.verbose,
         )
     elif os.path.exists(args.module):
         temp_env.create_persistent_virtual_env()
@@ -53,7 +52,6 @@ def main(args):
                 temp_env.install_package_in_virtualenv,
                 args.module,
                 description=f"Installing {args.module}",
-                verbose=args.verbose,
             )
             module = __import__(args.module)
             api_structure = extract_api_from_module(
@@ -65,6 +63,6 @@ def main(args):
 
     try:
         save(args.output, api_structure)
-        logger.info(f"API saved to {args.output}")
+        print(f"API saved to {args.output}")
     except ValueError as e:
         logger.error(f"Error saving file: {e}")

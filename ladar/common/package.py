@@ -5,8 +5,6 @@ import sys
 
 import ladar.common.venv as temp_env
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

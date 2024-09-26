@@ -8,6 +8,20 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+def configure_logging(verbosity_level):
+    """
+    Configure the logging level based on the verbosity.
+    verbosity_level: 0 (warnings only), 1 (-v, info level), 2 (-vv, debug level)
+    """
+    if verbosity_level == 0:
+        logging.basicConfig(level=logging.WARNING)
+    elif verbosity_level == 1:
+        logging.basicConfig(level=logging.INFO)
+    elif verbosity_level >= 2:
+        logging.basicConfig(level=logging.DEBUG)
+    logger.debug(f"Verbosity level set to {logging.getLevelName(logger.level)}")
+
+
 def discover_commands():
     # Recherche dynamique des sous-commandes dans le dossier 'cmds'
     commands = {}
@@ -25,9 +39,11 @@ def main():
     )
 
     parser.add_argument(
+        "-v",
         "--verbose",
-        action="store_true",
-        help="Enable verbose output and debugging logs",
+        action="count",
+        default=0,
+        help="Increase verbosity level (-v for INFO, -vv for DEBUG)",
     )
 
     # Découverte automatique des sous-commandes
@@ -45,11 +61,7 @@ def main():
     # Parse les arguments
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO)
-    # Configure logging level based on verbosity
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-        logger.debug("Verbose mode enabled, logging set to DEBUG")
+    configure_logging(args.verbose)
 
     if args.command in commands:
         # Exécution dynamique de la sous-commande

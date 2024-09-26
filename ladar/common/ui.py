@@ -6,6 +6,8 @@ from io import StringIO
 
 from tqdm import tqdm
 
+from ladar.common.helpers import is_verbose
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,9 +29,7 @@ def capture_output(verbose=False):
             sys.stdout, sys.stderr = old_out, old_err
 
 
-def run_with_progress(
-    func, *args, description="Processing", total_steps=100, verbose=False, **kwargs
-):
+def run_with_progress(func, *args, description="Processing", total_steps=100, **kwargs):
     """
     Executes a function while capturing its logs and displays a progress bar.
     If verbose is True, the logs will be shown to the user. Otherwise, they will be hidden.
@@ -44,18 +44,16 @@ def run_with_progress(
     Returns:
         result: The result of the function execution.
     """
-    logger.debug(f"Starting '{description}' with verbose={verbose}")
+    logger.debug(f"Starting '{description}'")
 
     with tqdm(total=total_steps, desc=description, unit="step") as pbar:
-        with capture_output(verbose=verbose) as (out, err):
-            result = func(*args, **kwargs)  # Call the passed function
+        with capture_output(verbose=is_verbose("INFO")) as (out, err):
+            result = func(*args, **kwargs)
 
-            # If not verbose, process the captured output without showing it to the user
-            if not verbose:
+            if not is_verbose("INFO"):
                 for line in out.getvalue().splitlines():
-                    pbar.update(1)  # Simulate progress based on log lines
+                    pbar.update(1)
 
-            # Ensure the progress bar reaches the full total
             pbar.n = total_steps
             pbar.refresh()
 

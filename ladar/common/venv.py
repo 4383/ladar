@@ -6,8 +6,8 @@ import sys
 import tempfile
 import venv
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+from ladar.common.helpers import is_verbose
+
 logger = logging.getLogger(__name__)
 
 # Global variable to store the temporary virtual environment directory path
@@ -36,7 +36,7 @@ def create_persistent_virtual_env():
     if _temp_dir is None:
         _temp_dir = tempfile.mkdtemp()  # Create a temporary directory for the venv
         venv.create(_temp_dir, with_pip=True)  # Create the virtual environment
-        logger.debug(f"Persistent virtual environment created in {_temp_dir}.")
+        logger.info(f"Persistent virtual environment created in {_temp_dir}.")
         # Add the venv's site-packages to sys.path
         add_venv_to_syspath(_temp_dir)
     return _temp_dir
@@ -74,7 +74,7 @@ def add_venv_to_syspath(env_dir):
 
     # Insert site-packages at the beginning of sys.path
     sys.path.insert(0, site_packages)
-    logger.debug(f"Added {site_packages} to sys.path")
+    logger.info(f"Added {site_packages} to sys.path")
 
 
 def install_package_in_virtualenv(package):
@@ -83,6 +83,9 @@ def install_package_in_virtualenv(package):
 
     This function runs the `pip` command inside the virtual environment to install
     the specified package.
+
+    The verbosity of the `pip` command is dynamically managed by the logging
+    configuration.
 
     Args:
         package (str): The name of the package to install (e.g., 'requests').
@@ -99,14 +102,32 @@ def install_package_in_virtualenv(package):
     if os.name != "nt":
         python_executable = os.path.join(_temp_dir, "bin", "python")
     else:
-        os.path.join(_temp_dir, "Scripts", "python.exe")
+        python_executable = os.path.join(_temp_dir, "Scripts", "python.exe")
 
     try:
         # Run pip install command
-        subprocess.check_call([python_executable, "-m", "pip", "install", package])
-        logger.debug(f"{package} successfully installed in the virtual environment.")
+        command = [python_executable, "-m", "pip", "install", package]
+
+        if is_verbose("DEBUG"):
+            # Show detailed pip logs if debug mode is enabled
+            subprocess.check_call(command)
+        else:
+            # Capture the output if not in debug mode
+            process = subprocess.Popen(
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            stdout, stderr = process.communicate()
+
+            if process.returncode == 0:
+                logger.info(
+                    f"{package} successfully installed in the virtual environment."
+                )
+            else:
+                logger.error(f"Failed to install {package} in the virtual environment.")
+                logger.error(stderr)
+                raise subprocess.CalledProcessError(process.returncode, command)
+
     except subprocess.CalledProcessError:
-        logger.error(f"Failed to install {package} in the virtual environment.")
         raise
 
 
@@ -141,5 +162,5 @@ def clean_up():
     global _temp_dir
     if _temp_dir is not None:
         shutil.rmtree(_temp_dir)  # Remove the directory
-        logger.debug(f"Persistent virtual environment removed: {_temp_dir}")
+        logger.info(f"Persistent virtual environment removed: {_temp_dir}")
         _temp_dir = None
