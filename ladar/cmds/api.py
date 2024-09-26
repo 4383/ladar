@@ -16,6 +16,11 @@ def add_arguments(parser):
         "--module", help="Name of the module to analyze or path to a local module."
     )
     parser.add_argument(
+        "--version",
+        help="Specify the version of the third-party module to install (e.g., '1.2.3')",
+        default=None,
+    )
+    parser.add_argument(
         "--output", required=True, help="Output file (toml, yaml, json)"
     )
     parser.add_argument(
@@ -23,6 +28,45 @@ def add_arguments(parser):
         action="store_true",
         help="Include private members in the analysis",
     )
+    parser.add_argument(
+        "--enable-legacy-compatibility",
+        action="store_true",
+        help="Enable legacy compatibility mode (install older setuptools/distutils for older packages).",
+    )
+
+
+def ensure_legacy_compatibility_enabled(legacy_compatibility=False):
+    """
+    Ensure that setuptools and distutils are installed in the virtual environment
+    for older packages that may need them.
+
+    Args:
+        legacy_compatibility (bool): If True, enables the installation of older versions
+                                     of setuptools and distutils for better retrocompatibility.
+    """
+    if not legacy_compatibility:
+        logger.info(
+            "Legacy compatibility mode is disabled. Skipping setuptools and distutils installation."
+        )
+        return
+
+    try:
+        import setuptools  # Check if setuptools is already installed
+
+        logger.debug("Setuptools is already installed.")
+    except ImportError:
+        # Install an older version of setuptools that includes distutils
+        logger.info("Installing an older version of setuptools with distutils support.")
+        temp_env.install_package_in_virtualenv("setuptools==58.0.4")
+
+    try:
+        import distutils  # Check if distutils is available (for older packages)
+
+        logger.debug("Distutils is already installed.")
+    except ImportError:
+        # Install a standalone version of distutils if needed
+        logger.info("Installing distutils to support older packages.")
+        temp_env.install_package_in_virtualenv("distlib")
 
 
 def main(args):
@@ -47,12 +91,28 @@ def main(args):
             return
     else:
         try:
-            env_dir = temp_env.create_persistent_virtual_env()
+            # Create the virtual environment with the specified Python version (if provided)
+            temp_env.create_persistent_virtual_env()
+
+            # Ensure legacy compatibility is enabled if required
+            ensure_legacy_compatibility_enabled(
+                legacy_compatibility=args.enable_legacy_compatibility
+            )
+
+            # Handle versioning if specified
+            if args.version:
+                module_with_version = f"{args.module}=={args.version}"
+            else:
+                module_with_version = args.module
+
+            # Install the specified module with the version (if any)
             run_with_progress(
                 temp_env.install_package_in_virtualenv,
-                args.module,
-                description=f"Installing {args.module}",
+                module_with_version,
+                description=f"Installing {module_with_version}",
             )
+
+            # Import and extract API from the installed module
             module = __import__(args.module)
             api_structure = extract_api_from_module(
                 module, include_private=args.include_private
