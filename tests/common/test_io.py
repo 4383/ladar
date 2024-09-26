@@ -1,6 +1,7 @@
 import json
 import xml.etree.ElementTree as ET
 from io import StringIO
+from unittest import mock
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -8,6 +9,7 @@ import toml
 import yaml
 
 from ladar.common.io import (
+    load,
     save_file,
     save_json,
     save_md,
@@ -17,6 +19,65 @@ from ladar.common.io import (
     save_xml,
     save_yaml,
 )
+
+# Sample content for testing
+yaml_content = """
+name: John Doe
+age: 30
+"""
+json_content = json.dumps({"name": "John Doe", "age": 30})
+toml_content = toml.dumps({"name": "John Doe", "age": 30})
+
+
+@pytest.mark.parametrize(
+    "file_extension, file_content, expected_result",
+    [
+        # Test for YAML content
+        ("yaml", yaml_content, {"name": "John Doe", "age": 30}),
+        # Test for JSON content
+        ("json", json_content, {"name": "John Doe", "age": 30}),
+        # Test for TOML content
+        ("toml", toml_content, {"name": "John Doe", "age": 30}),
+    ],
+)
+def test_load_supported_formats(file_extension, file_content, expected_result):
+    """
+    Test the load function with supported file formats: YAML, TOML, and JSON.
+    """
+    file_path = f"test_file.{file_extension}"
+
+    # Mock the open function to simulate file reading
+    with mock.patch("builtins.open", mock.mock_open(read_data=file_content)):
+        result = load(file_path)
+        assert result == expected_result
+
+
+def test_load_unsupported_format():
+    """
+    Test the load function with an unsupported file format.
+    """
+    file_path = "test_file.txt"
+
+    with pytest.raises(ValueError, match="Unsupported file format"):
+        load(file_path)
+
+
+def test_load_parsing_error():
+    """
+    Test the load function when parsing fails (e.g., due to invalid syntax).
+    """
+    file_path = "test_file.yaml"
+
+    # Simuler le contenu du fichier sans créer un fichier réel
+    invalid_yaml_content = "name: John Doe\nage:"
+
+    # Mock l'ouverture du fichier pour retourner un contenu invalide
+    with mock.patch("builtins.open", mock.mock_open(read_data=invalid_yaml_content)):
+        # Simuler une erreur de parsing YAML avec mock
+        with mock.patch("yaml.safe_load", side_effect=yaml.YAMLError("Error parsing")):
+            # S'assurer que l'erreur ValueError est levée
+            with pytest.raises(ValueError, match="Error parsing"):
+                load(file_path)
 
 
 # Test the dispatch function for various file formats

@@ -16,3 +16,4 @@ documentation for details.
    :caption: Contents:
 
    api.rst
+   normalize.rst
