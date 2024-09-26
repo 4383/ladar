@@ -35,6 +35,37 @@ Additionally, for older modules that require legacy support, a compatibility mod
 
 
 def add_arguments(parser):
+    """
+    Adds the argument options to the API command parser.
+
+    Args:
+        parser (argparse.ArgumentParser): The parser to which arguments are added.
+
+    Arguments:
+        --module (str):
+            - Specify the module to analyze. The following types of values can be passed:
+                1. A standard library module name (e.g., 'asyncio', 'http', 'pathlib')
+                   to analyze a specific standard library module.
+                2. 'stdlib' to analyze the entire Python standard library.
+                3. The name of a third-party module, which will be installed in a virtual environment for analysis.
+                4. The path to a local Python module or project.
+
+        --version (str, optional):
+            - Specify the version of a third-party module to install and analyze.
+              Useful when specific versions are required for compatibility.
+
+        --output (str, required):
+            - Specify the output file where the extracted API will be saved.
+              Supported formats are 'toml', 'yaml', and 'json'.
+
+        --include-private (bool, optional):
+            - Include private members (those starting with an underscore '_') in the API analysis.
+              By default, only public members are included.
+
+        --enable-legacy-compatibility (bool, optional):
+            - Enable legacy compatibility mode to support older packages requiring older versions
+              of setuptools or distutils for installation.
+    """
     parser.formatter_class = argparse.RawTextHelpFormatter
     parser.description = long_description
 
@@ -75,7 +106,8 @@ def add_arguments(parser):
         required=True,
         help=(
             "Specify the output file where the extracted API will be saved. "
-            "Supported formats include 'toml', 'yaml', and 'json'. The file extension should match the desired format."
+            "Supported formats include 'toml', 'yaml', and 'json'. "
+            "The file extension should match the desired format."
         ),
     )
     parser.add_argument(
