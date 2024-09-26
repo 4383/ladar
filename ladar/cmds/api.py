@@ -1,3 +1,4 @@
+import argparse
 import importlib
 import logging
 import os
@@ -5,33 +6,75 @@ import os
 import ladar.common.venv as temp_env
 from ladar.common.io import save
 from ladar.common.package import install_local_dependencies, load_local_module
-from ladar.common.ui import run_with_progress  # Import the progress wrapper
+from ladar.common.ui import run_with_progress
 from ladar.designer.api import analyze_stdlib, extract_api_from_module
 
 logger = logging.getLogger(__name__)
 
 
+command_description = "Extract and save the API structure of a Python module."
+long_descrption = """
+The 'api' command is designed to analyze the API of a specified Python module,
+whether it's a third-party package, a local project, or even the Python standard
+library (stdlib).
+
+It extracts the structure of the API, including functions, classes, and other members,
+and saves this information in a specified output file (in TOML, YAML, or JSON format).
+
+The command is useful for generating a snapshot of a module's API, whether for
+documentation purposes, code auditing, or ensuring compatibility across versions.
+By default, the command analyzes only public members, but you can include private
+members if needed. Additionally, for older modules that require older versions of
+setuptools or distutils, you can enable a legacy compatibility mode to handle such
+dependencies.
+"""
+
+
 def add_arguments(parser):
+
+    parser.formatter_class = argparse.RawTextHelpFormatter
+    parser.description = long_descrption
+
     parser.add_argument(
-        "--module", help="Name of the module to analyze or path to a local module."
+        "--module",
+        help=(
+            "Specify the name of the module to analyze or the path to a local module. "
+            "If analyzing a third-party module, the module will be automatically installed "
+            "in a virtual environment. If 'stdlib' is provided, the standard library will be analyzed."
+        ),
     )
     parser.add_argument(
         "--version",
-        help="Specify the version of the third-party module to install (e.g., '1.2.3')",
+        help=(
+            "Specify the version of the third-party module to install and analyze (e.g., '1.2.3'). "
+            "This option is useful when specific versions of a module are required for compatibility reasons."
+        ),
         default=None,
     )
     parser.add_argument(
-        "--output", required=True, help="Output file (toml, yaml, json)"
+        "--output",
+        required=True,
+        help=(
+            "Specify the output file where the extracted API will be saved. "
+            "Supported formats include 'toml', 'yaml', and 'json'. The file extension should match the desired format."
+        ),
     )
     parser.add_argument(
         "--include-private",
         action="store_true",
-        help="Include private members in the analysis",
+        help=(
+            "Include private members in the API analysis. By default, private members "
+            "(those starting with an underscore '_') are excluded from the extracted API structure."
+        ),
     )
     parser.add_argument(
         "--enable-legacy-compatibility",
         action="store_true",
-        help="Enable legacy compatibility mode (install older setuptools/distutils for older packages).",
+        help=(
+            "Enable legacy compatibility mode for older packages that may require older versions of setuptools and distutils. "
+            "When enabled, the necessary tools for legacy support will be installed in the virtual environment. "
+            "This is useful for older packages that may not be compatible with modern versions of Python."
+        ),
     )
 
 
