@@ -5,11 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from ladar.designer.api import (
-    analyze_stdlib,
-    extract_api_from_module,
-    is_async_function,
-)
+from ladar.api.api import analyze_stdlib, extract_api_from_module, is_async_function
 
 
 # Mock module for testing
