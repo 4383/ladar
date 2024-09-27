@@ -16,17 +16,18 @@ def is_async_function(member):
     return inspect.iscoroutinefunction(member) or inspect.isasyncgenfunction(member)
 
 
-def extract_api_from_module(module, include_private=False):
+def extract_api_from_module(module, include_private=False, include_docstrings=True):
     """
-    Extract functions, classes, and their signatures from a given module.
+    Extract functions, classes, their signatures, and optionally docstrings from a given module.
 
     Args:
         module (module): The Python module to analyze.
         include_private (bool): Whether to include private functions and members (those starting with "_").
+        include_docstrings (bool): Whether to include docstrings in the extracted API.
 
     Returns:
         dict: A dictionary representing the structure of the module's API. Keys are the names of
-        functions, classes, and submodules, with their types and signatures as values.
+        functions, classes, and submodules, with their types, signatures, and docstrings as values.
     """
     api_structure = {}
 
@@ -54,6 +55,8 @@ def extract_api_from_module(module, include_private=False):
                 continue
             visited.add(id(member))
 
+            docstring = inspect.getdoc(member) if include_docstrings else None
+
             if inspect.isfunction(member) or inspect.isbuiltin(member):
                 try:
                     signature = str(inspect.signature(member))
@@ -66,9 +69,13 @@ def extract_api_from_module(module, include_private=False):
                     "type": function_type,
                     "signature": signature,
                 }
+                if docstring:
+                    api_structure[full_name]["docstring"] = docstring
 
             elif inspect.isclass(member):
                 api_structure[full_name] = {"type": "class", "members": {}}
+                if docstring:
+                    api_structure[full_name]["docstring"] = docstring
                 # Explore class methods
                 class_members = inspect.getmembers(member)
                 for method_name, method in class_members:
@@ -84,9 +91,18 @@ def extract_api_from_module(module, include_private=False):
                             "type": method_type,
                             "signature": signature,
                         }
+                        method_docstring = (
+                            inspect.getdoc(method) if include_docstrings else None
+                        )
+                        if method_docstring:
+                            api_structure[full_name]["members"][method_name][
+                                "docstring"
+                            ] = method_docstring
 
             elif inspect.ismodule(member):
                 api_structure[full_name] = {"type": "module", "members": {}}
+                if docstring:
+                    api_structure[full_name]["docstring"] = docstring
                 # Explore submodule members recursively
                 sub_members = inspect.getmembers(member)
                 explore_members(sub_members, parent_name=full_name, visited=visited)

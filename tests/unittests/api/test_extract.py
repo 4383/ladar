@@ -126,3 +126,33 @@ def test_analyze_stdlib_module_import_error():
 
         # Should return an empty dictionary if all imports fail
         assert api == {}, "The result should be an empty dictionary if all imports fail"
+
+
+def test_extract_api_from_module_with_docstrings(mock_module):
+    """Test that docstrings are included when include_docstrings is True."""
+    api = extract_api_from_module(
+        mock_module, include_private=True, include_docstrings=True
+    )
+
+    assert (
+        api["__class__"]["members"]["sync_func"]["docstring"] == "Synchronous function."
+    )
+    assert (
+        api["__class__"]["members"]["async_func"]["docstring"]
+        == "Asynchronous function."
+    )
+    assert api["NestedClass"]["members"]["method"]["docstring"] == "Synchronous method."
+    assert (
+        api["NestedClass"]["members"]["async_method"]["docstring"]
+        == "Asynchronous method."
+    )
+
+
+def test_extract_api_from_module_without_docstrings(mock_module):
+    """Test that docstrings are not included when include_docstrings is False."""
+    api = extract_api_from_module(
+        mock_module, include_private=True, include_docstrings=False
+    )
+
+    assert "docstring" not in api["__class__"]["members"]["sync_func"]
+    assert "docstring" not in api["__class__"]["members"]["async_func"]

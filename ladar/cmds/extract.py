@@ -13,21 +13,20 @@ from ladar.common.ui import run_with_progress
 
 logger = logging.getLogger(__name__)
 
-
 command_description = """
 Extract and save the API structure of a Python module, including standard library modules.
 """
 long_description = """
-The 'api' command analyzes the API of a specified Python module or a module from the
+The 'extract' command analyzes the API of a specified Python module or a module from the
 Python standard library (stdlib).
 
 You can specify a third-party package, a local project, or a standard library module for analysis.
 If 'stdlib' is passed as the module, the entire Python standard library will be analyzed.
 Otherwise, you can analyze individual standard library modules (e.g., 'asyncio', 'http')
-or third-party packages (e.g, 'requests', 'eventlet', 'flask').
+or third-party packages (e.g., 'requests', 'eventlet', 'flask').
 
-The extracted API includes functions, classes, and other members, and is saved to a
-specified output file (in TOML, YAML, or JSON format).
+The extracted API includes functions, classes, other members, and optionally docstrings,
+and is saved to a specified output file (in TOML, YAML, or JSON format).
 
 By default, only public members are included, but you can opt to include private members.
 Additionally, for older modules that require legacy support, a compatibility mode is available.
@@ -36,7 +35,7 @@ Additionally, for older modules that require legacy support, a compatibility mod
 
 def add_arguments(parser):
     """
-    Adds the argument options to the API command parser.
+    Adds the argument options to the extract command parser.
 
     Args:
         parser (argparse.ArgumentParser): The parser to which arguments are added.
@@ -61,6 +60,9 @@ def add_arguments(parser):
         --include-private (bool, optional):
             - Include private members (those starting with an underscore '_') in the API analysis.
               By default, only public members are included.
+
+        --include-docstrings (bool, optional):
+            - Include docstrings in the API analysis. By default, docstrings are included.
 
         --enable-legacy-compatibility (bool, optional):
             - Enable legacy compatibility mode to support older packages requiring older versions
@@ -117,6 +119,11 @@ def add_arguments(parser):
             "Include private members in the API analysis. By default, private members "
             "(those starting with an underscore '_') are excluded from the extracted API structure."
         ),
+    )
+    parser.add_argument(
+        "--include-docstrings",
+        action="store_true",
+        help="Include docstrings in the API analysis.",
     )
     parser.add_argument(
         "--enable-legacy-compatibility",
@@ -185,7 +192,9 @@ def main(args):
                 logger.info(f"Analyzing stdlib module: {args.module}")
                 module = __import__(args.module)
                 api_structure = extract_api_from_module(
-                    module, include_private=args.include_private
+                    module,
+                    include_private=args.include_private,
+                    include_docstrings=args.include_docstrings,
                 )
             elif os.path.exists(args.module):
                 temp_env.create_persistent_virtual_env()
@@ -194,7 +203,9 @@ def main(args):
                     module_name = load_local_module(args.module)
                     module = importlib.import_module(module_name)
                     api_structure = extract_api_from_module(
-                        module, include_private=args.include_private
+                        module,
+                        include_private=args.include_private,
+                        include_docstrings=args.include_docstrings,
                     )
                 except ImportError as e:
                     logger.error(f"Error loading local module from {args.module}: {e}")
@@ -219,7 +230,9 @@ def main(args):
 
                 module = __import__(args.module)
                 api_structure = extract_api_from_module(
-                    module, include_private=args.include_private
+                    module,
+                    include_private=args.include_private,
+                    include_docstrings=args.include_docstrings,
                 )
         except ImportError as e:
             logger.error(f"Error importing module {args.module}: {e}")
