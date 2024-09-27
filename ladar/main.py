@@ -2,7 +2,6 @@ import argparse
 import importlib
 import logging
 import pkgutil
-import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
