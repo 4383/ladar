@@ -6,7 +6,7 @@ import sys
 import textwrap
 
 import ladar.common.venv as temp_env
-from ladar.api.api import analyze_stdlib, extract_api_from_module
+from ladar.api.extract import analyze_stdlib, extract_api_from_module
 from ladar.common.io import save
 from ladar.common.package import install_local_dependencies, load_local_module
 from ladar.common.ui import run_with_progress
