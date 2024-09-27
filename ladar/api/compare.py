@@ -10,7 +10,7 @@ def load_algorithms():
     Dynamically load all comparison algorithms from the 'ladar/api/algorithms' directory.
 
     Returns:
-        dict: A dictionary of algorithm names mapped to their comparison functions.
+        dict: A dictionary of algorithm names mapped to their comparison functions and their argument functions.
     """
     algorithms_dir = os.path.dirname(__file__) + "/algorithms"
     algorithm_modules = discover_modules(algorithms_dir)
@@ -20,20 +20,21 @@ def load_algorithms():
         try:
             module = importlib.import_module(f"ladar.api.algorithms.{module_name}")
             if hasattr(module, "compare"):
-                algorithms[module_name] = module.compare
+                algorithms[module_name] = module
         except ImportError as e:
             print(f"Failed to import algorithm {module_name}: {e}")
 
     return algorithms
 
 
-def compare_structures(structures: list, algorithms=None) -> dict:
+def compare_structures(structures: list, algorithms=None, params=None) -> dict:
     """
     Compare multiple API structures using specified algorithms.
 
     Args:
         structures (list): A list of API structures to compare.
         algorithms (list): List of algorithm names to use for comparison. Defaults to all available.
+        params (dict): A dictionary of parameters for each algorithm (e.g., {"dbscan": {"eps": 0.5, "min_samples": 5}}).
 
     Returns:
         dict: A dictionary containing the comparison results for each algorithm.
@@ -46,8 +47,11 @@ def compare_structures(structures: list, algorithms=None) -> dict:
     results = {}
 
     def compare_with_algorithm(algorithm):
-        """Effectue la comparaison avec un algorithme spécifique."""
-        return algorithm, available_algorithms[algorithm](structures)
+        """Compare with a specific algorithm."""
+        algo_params = params.get(algorithm, {}) if params else {}
+        return algorithm, available_algorithms[algorithm].compare(
+            structures, algo_params
+        )
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_algorithm = {

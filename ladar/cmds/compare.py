@@ -3,6 +3,7 @@ import logging
 import textwrap
 
 from ladar.api.compare import compare_structures, load_algorithms
+from ladar.common.helpers import build_algorithm_params
 from ladar.common.io import load, save
 
 logger = logging.getLogger(__name__)
@@ -37,8 +38,8 @@ def add_arguments(parser):
     parser.formatter_class = argparse.RawTextHelpFormatter
     parser.description = long_description
 
-    available_algorithms = list(load_algorithms().keys())
-    algorithm_help = f"Specify the algorithms to use for comparison. Default is all discovered algorithms.\nAvailable algorithms: {', '.join(available_algorithms)}"
+    available_algorithms = load_algorithms()
+    algorithm_help = f"Specify the algorithms to use for comparison. Default is all discovered algorithms.\nAvailable algorithms: {', '.join(available_algorithms.keys())}"
 
     parser.add_argument(
         "--structures",
@@ -56,6 +57,9 @@ def add_arguments(parser):
         required=True,
         help="Specify the output file where the comparison results will be saved (e.g., 'output.yaml').",
     )
+    for algorithm_name, algorithm_module in available_algorithms.items():
+        if hasattr(algorithm_module, "add_arguments"):
+            algorithm_module.add_arguments(parser)
 
 
 def main(args):
@@ -63,20 +67,25 @@ def main(args):
         logger.error("At least two structures are required for comparison.")
         return
 
-    # Load all the structures to compare
+    # Charger les structures à comparer
     structures = []
     for structure_path in args.structures:
         try:
-            structure = load_structure(structure_path)
+            structure = load(structure_path)
             structures.append(structure)
         except Exception as e:
             logger.error(f"Failed to load structure {structure_path}: {e}")
             return
 
-    # Perform the comparison
-    comparison_results = compare_structures(structures, algorithms=args.algorithms)
+    # Utiliser la nouvelle fonction pour construire les paramètres des algorithmes
+    params = build_algorithm_params(args)
 
-    # Save the comparison results
+    # Exécuter la comparaison
+    comparison_results = compare_structures(
+        structures, algorithms=args.algorithms, params=params
+    )
+
+    # Sauvegarder les résultats de comparaison
     try:
         save(args.output, comparison_results)
         print(f"Comparison results saved to {args.output}")

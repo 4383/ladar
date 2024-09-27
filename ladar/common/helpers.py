@@ -28,3 +28,28 @@ def discover_modules(directory):
         if filename.endswith(".py") and filename != "__init__.py":
             modules.append(filename[:-3])
     return modules
+
+
+def build_algorithm_params(args):
+    """
+    Build a dictionary of parameters for each algorithm based on the command-line arguments.
+
+    Args:
+        args (argparse.Namespace): Parsed command-line arguments.
+
+    Returns:
+        dict: A dictionary where the key is the algorithm name and the value is another
+              dictionary of parameters specific to that algorithm.
+    """
+    params = {}
+
+    for arg, value in vars(args).items():
+        if value is not None:
+            # Split arguments that follow the "algorithm_param" pattern
+            if "_" in arg:
+                algo_name, param_name = arg.split("_", 1)
+                if algo_name not in params:
+                    params[algo_name] = {}
+                params[algo_name][param_name] = value
+
+    return params
