@@ -61,8 +61,7 @@ def add_arguments(parser):
             - Include private members (those starting with an underscore '_') in the API analysis.
               By default, only public members are included.
 
-        --include-docstrings (bool, optional):
-            - Include docstrings in the API analysis. By default, docstrings are included.
+        --exclude-docstrings (bool, optional): Exclude docstrings from the API analysis (disabled by default).
 
         --enable-legacy-compatibility (bool, optional):
             - Enable legacy compatibility mode to support older packages requiring older versions
@@ -123,9 +122,10 @@ def add_arguments(parser):
         ),
     )
     parser.add_argument(
-        "--include-docstrings",
+        "--exclude-docstrings",
         action="store_true",
-        help="Include docstrings in the API analysis.",
+        default=False,
+        help="Exclude docstrings from the API analysis. (Disabled by default)",
     )
     parser.add_argument(
         "--enable-legacy-compatibility",
@@ -201,7 +201,7 @@ def main(args):
                 api_structure = extract_api_from_module(
                     module,
                     include_private=args.include_private,
-                    include_docstrings=args.include_docstrings,
+                    include_docstrings=not args.exclude_docstrings,
                     disable_normalization=args.disable_normalization,
                 )
             elif os.path.exists(args.module):
@@ -213,7 +213,7 @@ def main(args):
                     api_structure = extract_api_from_module(
                         module,
                         include_private=args.include_private,
-                        include_docstrings=args.include_docstrings,
+                        include_docstrings=not args.exclude_docstrings,
                         disable_normalization=args.disable_normalization,
                     )
                 except ImportError as e:
@@ -241,7 +241,7 @@ def main(args):
                 api_structure = extract_api_from_module(
                     module,
                     include_private=args.include_private,
-                    include_docstrings=args.include_docstrings,
+                    include_docstrings=not args.exclude_docstrings,
                     disable_normalization=args.disable_normalization,
                 )
         except ImportError as e:
