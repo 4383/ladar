@@ -29,11 +29,13 @@ def add_arguments(parser):
     Arguments:
         --structures (list):
             - A list of paths to the structures to compare.
+
         --algorithms (list, optional):
             - Specify the algorithms to use for comparison. By default, all discovered algorithms are used.
+
         --output (str, required):
             - Specify the output file where the comparison results will be saved.
-            Supported formats are 'toml', 'yaml', and 'json'.
+              Supported formats are 'toml', 'yaml', and 'json'.
     """
     parser.formatter_class = argparse.RawTextHelpFormatter
     parser.description = long_description

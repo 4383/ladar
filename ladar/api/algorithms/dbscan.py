@@ -5,6 +5,23 @@ from sklearn.cluster import DBSCAN
 def add_arguments(parser):
     """
     Add DBSCAN-specific arguments to the parser.
+
+    Parameters for the DBSCAN algorithm:
+
+    - `eps`: The maximum distance between two samples for one to be considered as
+      in the neighborhood of the other. Smaller values of `eps` result in smaller,
+      denser clusters. Default is `0.5`.
+
+    - `min_samples`: The number of samples (or total weight) in a neighborhood for
+      a point to be considered a core point. This includes the point itself. Higher
+      values of `min_samples` make the algorithm more conservative in forming clusters.
+      Default is `2`.
+
+    These parameters control how the DBSCAN algorithm clusters the API structures.
+
+    Args:
+        parser (argparse.ArgumentParser): The argument parser instance where the DBSCAN-specific
+                                          options are added.
     """
     parser.add_argument(
         "--dbscan-eps",

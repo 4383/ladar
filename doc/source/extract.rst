@@ -80,6 +80,13 @@ Usage Examples
 
         ladar extract --module some_old_package --enable-legacy-compatibility --output /path/to/output.yaml
 
+8. Analyze the requests module, excluding docstrings, and save the output in JSON format:
+
+    .. code-block:: bash
+
+        ladar extract --module requests --exclude-docstrings --output /path/to/output.json
+
+
 Conclusion
 ----------
 

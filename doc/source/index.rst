@@ -17,3 +17,4 @@ documentation for details.
 
    extract.rst
    normalize.rst
+   compare.rst
