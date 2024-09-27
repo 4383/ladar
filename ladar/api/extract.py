@@ -26,7 +26,10 @@ def should_include_member(name):
     Returns:
         bool: True if the member should be included, False otherwise.
     """
-    # Exclude built-in methods and magic methods (those with double underscores).
+    # Exclude built-in methods and magic methods (those with double underscores),
+    # except for __init__ which is important for class initialization.
+    if name == "__init__":
+        return True
     return not (name.startswith("__") and name.endswith("__"))
 
 
@@ -54,6 +57,10 @@ def extract_api_from_module(
         for name, member in members:
             # Skip private members unless included
             if not include_private and name.startswith("_"):
+                continue
+
+            # Ensure the __init__ method is included but skip other magic methods
+            if not should_include_member(name):
                 continue
 
             full_name = f"{parent_name}.{name}" if parent_name else name
@@ -88,6 +95,9 @@ def extract_api_from_module(
 
                 class_members = inspect.getmembers(member)
                 for method_name, method in class_members:
+                    if not should_include_member(method_name):
+                        continue
+
                     if inspect.isfunction(method) or inspect.ismethod(method):
                         try:
                             signature = str(inspect.signature(method))

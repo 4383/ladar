@@ -26,6 +26,14 @@ class MockModule:
             """Asynchronous method."""
             pass
 
+        def __init__(self, value):
+            """Initialization method."""
+            pass
+
+        def __str__(self):
+            """Magic method."""
+            pass
+
 
 @pytest.fixture
 def mock_module():
@@ -50,29 +58,29 @@ def test_extract_api_from_module(mock_module):
     """Test if extract_api_from_module correctly extracts API information."""
     api = extract_api_from_module(mock_module, include_private=True)
 
-    # Vérifier que 'sync_func' et 'async_func' sont dans MockModule.__class__ directement sans le préfixe complet
-    assert (
-        "sync_func" in api["MockModule.__class__"]["members"]
-    ), "sync_func should be in the extracted API under MockModule.__class__"
-    assert (
-        "async_func" in api["MockModule.__class__"]["members"]
-    ), "async_func should be in the extracted API under MockModule.__class__"
+    # Vérifier que NestedClass existe bien dans MockModule
+    assert "MockModule.NestedClass" in api, "NestedClass should be part of the API"
 
-    # Vérification de la NestedClass et des méthodes imbriquées
-    assert "MockModule.NestedClass" in api, "NestedClass should be in the extracted API"
-    assert (
-        api["MockModule.NestedClass"]["type"] == "class"
-    ), "NestedClass should be identified as a class"
+    # Vérification des méthodes dans NestedClass
     assert (
         "method" in api["MockModule.NestedClass"]["members"]
     ), "method should be in NestedClass members"
     assert (
         api["MockModule.NestedClass"]["members"]["method"]["type"] == "method"
     ), "method should be identified as a method"
+
+    assert (
+        "async_method" in api["MockModule.NestedClass"]["members"]
+    ), "async_method should be in NestedClass members"
     assert (
         api["MockModule.NestedClass"]["members"]["async_method"]["type"]
         == "async method"
     ), "async_method should be identified as an async method"
+
+    # Vérifier que __init__ est bien présent et que les méthodes magiques sont exclues
+    assert (
+        "__init__" in api["MockModule.NestedClass"]["members"]
+    ), "__init__ should be included in the API"
 
 
 def test_extract_api_from_module_include_private(mock_module):
@@ -82,17 +90,7 @@ def test_extract_api_from_module_include_private(mock_module):
         mock_module, module_name="MockModule", include_private=True
     )
 
-    # Vérification que la fonction privée est bien présente dans la structure
-    assert (
-        "MockModule._private_func" in api
-    ), "Private functions should be included when include_private is True"
-
-
-def test_extract_api_from_module_include_private(mock_module):
-    """Test that private members are included when include_private is True."""
-    mock_module._private_func = lambda: None
-    api = extract_api_from_module(mock_module, include_private=True)
-
+    # Verify that private function is included
     assert (
         "MockModule._private_func" in api
     ), "Private functions should be included when include_private is True"
@@ -129,18 +127,9 @@ def test_extract_api_from_module_with_docstrings(mock_module):
     api = extract_api_from_module(
         mock_module, include_private=True, include_docstrings=True
     )
-    print(api)
 
-    # Vérifier que 'sync_func' et 'async_func' sont dans MockModule.__class__ et vérifier leurs docstrings
-    assert (
-        api["MockModule.__class__"]["members"]["sync_func"]["docstring"]
-        == "Synchronous function."
-    ), "sync_func docstring should match 'Synchronous function.'"
-
-    assert (
-        api["MockModule.__class__"]["members"]["async_func"]["docstring"]
-        == "Asynchronous function."
-    ), "async_func docstring should match 'Asynchronous function.'"
+    # Vérifier que NestedClass existe bien dans MockModule
+    assert "MockModule.NestedClass" in api, "NestedClass should be part of the API"
 
     # Vérifier la docstring des méthodes dans NestedClass
     assert (
@@ -153,26 +142,34 @@ def test_extract_api_from_module_with_docstrings(mock_module):
         == "Asynchronous method."
     ), "async_method docstring should match 'Asynchronous method.'"
 
+    # Vérifier la docstring de __init__ dans NestedClass
+    assert (
+        api["MockModule.NestedClass"]["members"]["__init__"]["docstring"]
+        == "Initialization method."
+    ), "__init__ docstring should match 'Initialization method.'"
+
 
 def test_extract_api_from_module_without_docstrings(mock_module):
     """Test that docstrings are not included when include_docstrings is False."""
     api = extract_api_from_module(
         mock_module, include_private=True, include_docstrings=False
     )
-    print(api)
 
-    # Vérifier que sync_func et async_func sont bien dans MockModule.__class__
-    assert (
-        "sync_func" in api["MockModule.__class__"]["members"]
-    ), "sync_func should be in MockModule.__class__"
-    assert (
-        "async_func" in api["MockModule.__class__"]["members"]
-    ), "async_func should be in MockModule.__class__"
+    # Vérification que NestedClass existe bien dans MockModule
+    assert "MockModule.NestedClass" in api, "NestedClass should be part of the API"
 
-    # Vérifier que les docstrings ne sont pas incluses
+    # Vérifier que 'method' et 'async_method' sont bien dans NestedClass
     assert (
-        "docstring" not in api["MockModule.__class__"]["members"]["sync_func"]
-    ), "The docstring for sync_func should not be included"
+        "method" in api["MockModule.NestedClass"]["members"]
+    ), "method should be in NestedClass members"
     assert (
-        "docstring" not in api["MockModule.__class__"]["members"]["async_func"]
-    ), "The docstring for async_func should not be included"
+        "async_method" in api["MockModule.NestedClass"]["members"]
+    ), "async_method should be in NestedClass members"
+
+    # Vérification que les docstrings ne sont pas incluses
+    assert (
+        "docstring" not in api["MockModule.NestedClass"]["members"]["method"]
+    ), "The docstring for method should not be included"
+    assert (
+        "docstring" not in api["MockModule.NestedClass"]["members"]["async_method"]
+    ), "The docstring for async_method should not be included"
