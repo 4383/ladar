@@ -56,7 +56,9 @@ def test_is_async_function():
 
 def test_extract_api_from_module(mock_module):
     """Test if extract_api_from_module correctly extracts API information."""
-    api = extract_api_from_module(mock_module, include_private=True)
+    api = extract_api_from_module(
+        mock_module, include_private=True, disable_normalization=True
+    )
 
     # Vérifier que NestedClass existe bien dans MockModule
     assert "MockModule.NestedClass" in api, "NestedClass should be part of the API"
@@ -87,7 +89,10 @@ def test_extract_api_from_module_include_private(mock_module):
     """Test that private members are included when include_private is True."""
     mock_module._private_func = lambda: None
     api = extract_api_from_module(
-        mock_module, module_name="MockModule", include_private=True
+        mock_module,
+        module_name="MockModule",
+        include_private=True,
+        disable_normalization=True,
     )
 
     # Verify that private function is included
@@ -125,7 +130,10 @@ def test_analyze_stdlib_module_import_error():
 def test_extract_api_from_module_with_docstrings(mock_module):
     """Test that docstrings are included when include_docstrings is True."""
     api = extract_api_from_module(
-        mock_module, include_private=True, include_docstrings=True
+        mock_module,
+        include_private=True,
+        include_docstrings=True,
+        disable_normalization=True,
     )
 
     # Vérifier que NestedClass existe bien dans MockModule
@@ -152,7 +160,10 @@ def test_extract_api_from_module_with_docstrings(mock_module):
 def test_extract_api_from_module_without_docstrings(mock_module):
     """Test that docstrings are not included when include_docstrings is False."""
     api = extract_api_from_module(
-        mock_module, include_private=True, include_docstrings=False
+        mock_module,
+        include_private=True,
+        include_docstrings=False,
+        disable_normalization=True,
     )
 
     # Vérification que NestedClass existe bien dans MockModule
@@ -173,3 +184,84 @@ def test_extract_api_from_module_without_docstrings(mock_module):
     assert (
         "docstring" not in api["MockModule.NestedClass"]["members"]["async_method"]
     ), "The docstring for async_method should not be included"
+
+
+def test_extract_api_from_module_with_normalization(mock_module):
+    """
+    Test that API structure is normalized by default.
+
+    The function verifies that:
+    - Class and method names are normalized (lowercase, without underscores).
+    - Docstrings are only converted to lowercase, without removing spaces or other characters.
+
+    Args:
+        mock_module (MockModule): The mock module for testing purposes.
+    """
+    api = extract_api_from_module(
+        mock_module, include_private=True, include_docstrings=True
+    )
+
+    # Check that class names are normalized
+    assert (
+        "mockmodule.nestedclass" in api
+    ), "NestedClass should be normalized in the API"
+
+    # Check that method names are normalized
+    assert (
+        "method" in api["mockmodule.nestedclass"]["members"]
+    ), "method should be normalized in NestedClass members"
+
+    # Ensure async_method is normalized and present (without underscore, due to normalization)
+    assert (
+        "asyncmethod" in api["mockmodule.nestedclass"]["members"]
+    ), "asyncmethod should be present and normalized in NestedClass members"
+
+    # Check that docstrings are only converted to lowercase
+    assert (
+        api["mockmodule.nestedclass"]["members"]["method"]["docstring"]
+        == "synchronous method."
+    ), "Docstring should be converted to lowercase"
+
+    # Check docstring for asyncmethod
+    assert (
+        api["mockmodule.nestedclass"]["members"]["asyncmethod"]["docstring"]
+        == "asynchronous method."
+    ), "Async method docstring should be converted to lowercase"
+
+
+def test_extract_api_from_module_without_normalization(mock_module):
+    """
+    Test that API structure is not normalized when disable_normalization is True.
+
+    The function verifies that:
+    - Class and method names are not normalized.
+    - Docstrings are not modified in any way when normalization is disabled.
+
+    Args:
+        mock_module (MockModule): The mock module for testing purposes.
+    """
+    api = extract_api_from_module(
+        mock_module,
+        include_private=True,
+        include_docstrings=True,
+        disable_normalization=True,
+    )
+
+    # Check that class names are not normalized
+    assert "MockModule.NestedClass" in api, "NestedClass should not be normalized"
+
+    # Check that method names are not normalized
+    assert (
+        "method" in api["MockModule.NestedClass"]["members"]
+    ), "method should not be normalized in NestedClass members"
+
+    # Check that docstrings are not converted to lowercase
+    assert (
+        api["MockModule.NestedClass"]["members"]["method"]["docstring"]
+        == "Synchronous method."
+    ), "Docstring should not be converted to lowercase"
+
+    assert (
+        api["MockModule.NestedClass"]["members"]["async_method"]["docstring"]
+        == "Asynchronous method."
+    ), "Async method docstring should not be converted to lowercase"

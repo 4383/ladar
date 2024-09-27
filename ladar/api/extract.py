@@ -2,6 +2,8 @@ import inspect
 import pkgutil
 import sys
 
+from ladar.api.normalize import normalize_docstring, normalize_value
+
 
 def is_async_function(member):
     """
@@ -34,16 +36,22 @@ def should_include_member(name):
 
 
 def extract_api_from_module(
-    module, module_name=None, include_private=False, include_docstrings=True
+    module,
+    module_name=None,
+    include_private=False,
+    include_docstrings=True,
+    disable_normalization=False,
 ):
     """
     Extract functions, classes, their signatures, and optionally docstrings from a given module.
+    Apply normalization unless disabled by the user.
 
     Args:
         module (module or class): The Python module or object to analyze.
         module_name (str): A default name to use if the module has no __name__ attribute.
         include_private (bool): Whether to include private functions and members (those starting with "_").
         include_docstrings (bool): Whether to include docstrings in the extracted API.
+        disable_normalization (bool): If True, normalization will be disabled.
 
     Returns:
         dict: A dictionary representing the structure of the module's API.
@@ -70,10 +78,17 @@ def extract_api_from_module(
             visited.add(id(member))
 
             docstring = inspect.getdoc(member) if include_docstrings else None
+            # Apply normalization if enabled
+            if not disable_normalization:
+                full_name = normalize_value(full_name)
+                if docstring:
+                    docstring = normalize_docstring(docstring)
 
             if inspect.isfunction(member) or inspect.isbuiltin(member):
                 try:
                     signature = str(inspect.signature(member))
+                    if not disable_normalization:
+                        signature = normalize_value(signature)
                 except (ValueError, TypeError):
                     signature = None
 
@@ -107,18 +122,26 @@ def extract_api_from_module(
                         method_type = (
                             "async method" if is_async_function(method) else "method"
                         )
-                        api_structure[full_name]["members"][method_name] = {
+                        normalized_method_name = (
+                            normalize_value(method_name)
+                            if not disable_normalization
+                            else method_name
+                        )
+                        api_structure[full_name]["members"][normalized_method_name] = {
                             "type": method_type,
                         }
                         if signature:
-                            api_structure[full_name]["members"][method_name][
+                            api_structure[full_name]["members"][normalized_method_name][
                                 "signature"
                             ] = signature
                         method_docstring = (
                             inspect.getdoc(method) if include_docstrings else None
                         )
+                        if method_docstring and not disable_normalization:
+                            method_docstring = normalize_docstring(method_docstring)
+
                         if method_docstring:
-                            api_structure[full_name]["members"][method_name][
+                            api_structure[full_name]["members"][normalized_method_name][
                                 "docstring"
                             ] = method_docstring
 

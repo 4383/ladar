@@ -67,6 +67,8 @@ def add_arguments(parser):
         --enable-legacy-compatibility (bool, optional):
             - Enable legacy compatibility mode to support older packages requiring older versions
               of setuptools or distutils for installation.
+
+        --disable-normalization (bool, optional): Disable the normalization of the extracted API.
     """
     parser.formatter_class = argparse.RawTextHelpFormatter
     parser.description = long_description
@@ -138,6 +140,11 @@ def add_arguments(parser):
             )
         ),
     )
+    parser.add_argument(
+        "--disable-normalization",
+        action="store_true",
+        help="Disable normalization of the extracted API structure. By default, normalization is enabled.",
+    )
 
 
 def ensure_legacy_compatibility_enabled(legacy_compatibility=False):
@@ -195,6 +202,7 @@ def main(args):
                     module,
                     include_private=args.include_private,
                     include_docstrings=args.include_docstrings,
+                    disable_normalization=args.disable_normalization,
                 )
             elif os.path.exists(args.module):
                 temp_env.create_persistent_virtual_env()
@@ -206,6 +214,7 @@ def main(args):
                         module,
                         include_private=args.include_private,
                         include_docstrings=args.include_docstrings,
+                        disable_normalization=args.disable_normalization,
                     )
                 except ImportError as e:
                     logger.error(f"Error loading local module from {args.module}: {e}")
@@ -233,6 +242,7 @@ def main(args):
                     module,
                     include_private=args.include_private,
                     include_docstrings=args.include_docstrings,
+                    disable_normalization=args.disable_normalization,
                 )
         except ImportError as e:
             logger.error(f"Error importing module {args.module}: {e}")

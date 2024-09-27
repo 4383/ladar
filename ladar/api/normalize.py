@@ -22,6 +22,21 @@ def normalize_value(value):
     return value
 
 
+def normalize_docstring(docstring):
+    """
+    Normalize docstrings by converting them to lowercase without removing spaces or other characters.
+
+    Args:
+        docstring (str): The docstring to normalize.
+
+    Returns:
+        str: The normalized docstring, converted to lowercase.
+    """
+    if isinstance(docstring, str):
+        return docstring.lower()
+    return docstring
+
+
 def normalize_content(content):
     """
     Normalize content depending on its structure.
