@@ -62,13 +62,15 @@ def extract_api_from_module(module, include_private=False, include_docstrings=Tr
                     signature = str(inspect.signature(member))
                 except (ValueError, TypeError):
                     signature = "N/A"  # Signature not available
+
                 function_type = (
                     "async function" if is_async_function(member) else "function"
                 )
                 api_structure[full_name] = {
                     "type": function_type,
-                    "signature": signature,
                 }
+                if signature != "N/A":
+                    api_structure[full_name]["signature"] = signature
                 if docstring:
                     api_structure[full_name]["docstring"] = docstring
 
@@ -89,8 +91,11 @@ def extract_api_from_module(module, include_private=False, include_docstrings=Tr
                         )
                         api_structure[full_name]["members"][method_name] = {
                             "type": method_type,
-                            "signature": signature,
                         }
+                        if signature != "N/A":
+                            api_structure[full_name]["members"][method_name][
+                                "signature"
+                            ] = signature
                         method_docstring = (
                             inspect.getdoc(method) if include_docstrings else None
                         )
