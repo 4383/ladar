@@ -24,16 +24,25 @@ def normalize_value(value):
 
 def normalize_docstring(docstring):
     """
-    Normalize docstrings by converting them to lowercase without removing spaces or other characters.
+    Normalize a docstring by converting it to lowercase and removing unnecessary newlines and spaces.
 
     Args:
         docstring (str): The docstring to normalize.
 
     Returns:
-        str: The normalized docstring, converted to lowercase.
+        str: The normalized docstring, formatted as a single, compact string.
     """
     if isinstance(docstring, str):
-        return docstring.lower()
+        # Remove leading/trailing whitespace and convert to lowercase
+        normalized = docstring.strip().lower()
+
+        # Replace multiple newlines with a single space
+        normalized = re.sub(r"\s*\n\s*", " ", normalized)
+
+        # Remove excess spaces between words
+        normalized = re.sub(r"\s+", " ", normalized)
+
+        return normalized
     return docstring
 
 

@@ -50,21 +50,41 @@ def test_normalize_content(input_content, expected_output):
 
 def test_normalize_docstring():
     """
-    Test that docstrings are correctly normalized to lowercase without removing spaces or special characters.
+    Test that docstrings are correctly normalized to lowercase and formatted as a single, compact string.
 
     This function verifies:
     - Docstrings are converted to lowercase.
-    - Spaces, newlines, and special characters remain unchanged.
+    - Newlines and excessive spaces are replaced with a single space.
+    - Special characters and meaningful spaces are preserved.
     """
-    # Test cases
-    docstring = "This is A Test Docstring.\nWith New Lines and SPECIAL Characters!"
+
+    # Test case with multiple lines and extra spaces
+    docstring = """Number of ways to choose k items from n items without repetition and
+    with order.
+
+    Evaluates to n! / (n - k)! when k <= n and evaluates
+
+    to zero when k > n.
+
+    If k is not specified or is None, then k defaults to n
+
+    and the function returns n!.
+
+    Raises TypeError if either of the arguments are not integers.
+
+    Raises ValueError if either of the arguments are negative."""
+
     expected_result = (
-        "this is a test docstring.\nwith new lines and special characters!"
+        "number of ways to choose k items from n items without repetition and with order. "
+        "evaluates to n! / (n - k)! when k <= n and evaluates to zero when k > n. "
+        "if k is not specified or is none, then k defaults to n and the function returns n!. "
+        "raises typeerror if either of the arguments are not integers. "
+        "raises valueerror if either of the arguments are negative."
     )
 
     assert (
         normalize_docstring(docstring) == expected_result
-    ), "Docstring should be converted to lowercase without altering spaces or special characters"
+    ), "Docstring should be normalized by converting to lowercase and removing excessive newlines and spaces"
 
     # Test with an empty string
     assert (
