@@ -37,7 +37,7 @@ def compare_structures(structures: list, algorithms=None, params=None) -> dict:
         params (dict): A dictionary of parameters for each algorithm (e.g., {"dbscan": {"eps": 0.5, "min_samples": 5}}).
 
     Returns:
-        dict: A dictionary containing the comparison results for each algorithm.
+        dict: A dictionary containing the comparison results for each algorithm, including a detailed mapping.
     """
     available_algorithms = load_algorithms()
 
@@ -49,9 +49,8 @@ def compare_structures(structures: list, algorithms=None, params=None) -> dict:
     def compare_with_algorithm(algorithm):
         """Compare with a specific algorithm."""
         algo_params = params.get(algorithm, {}) if params else {}
-        return algorithm, available_algorithms[algorithm].compare(
-            structures, algo_params
-        )
+        result = available_algorithms[algorithm].compare(structures, algo_params)
+        return algorithm, result
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_algorithm = {
