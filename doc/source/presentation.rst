@@ -14,31 +14,35 @@ how Ladar processes API structures, from extraction to substitution, highlightin
 interaction between various components and the overall workflow.
 
 1. **Extractor**:
-   - The process begins with the :ref:`extract`.
-   - Ladar takes a Python module, analyzes it, and extracts its API structure
-     (functions, classes, methods, and optionally docstrings).
-   - The extracted API structure is stored in a specified file (in TOML, YAML, or JSON
-     format) for further analysis.
+
+- The process begins with the :ref:`extract`.
+- Ladar takes a Python module, analyzes it, and extracts its API structure
+  (functions, classes, methods, and optionally docstrings).
+- The extracted API structure is stored in a specified file (in TOML, YAML, or JSON
+  format) for further analysis.
 
 2. **Comparator**:
-   - After the extraction phase, the :ref:`compare` command is used to compare two or
-     more API structures.
-   - The comparison is performed using one or more algorithms (e.g., DBSCAN, TF-IDF,
-     etc.), which analyze the similarities and differences between the structures.
-   - The result of the comparison is a detailed mapping of changes or similarities
-     between the API structures, which is then saved.
+
+- After the extraction phase, the :ref:`compare` command is used to compare two or more
+  API structures.
+- The comparison is performed using one or more algorithms (e.g., DBSCAN, TF-IDF,
+  etc.), which analyze the similarities and differences between the structures.
+- The result of the comparison is a detailed mapping of changes or similarities
+  between the API structures, which is then saved.
 
 3. **Mapping Generator**:
-   - Once the API structures have been compared, Ladar generates a substitution mapping.
-   - This mapping serves as a blueprint for how parts of the code in one module (or
-     project) can be substituted by equivalent parts from another module, based on the
-     comparison results.
+
+- Once the API structures have been compared, Ladar generates a substitution mapping.
+- This mapping serves as a blueprint for how parts of the code in one module (or
+  project) can be substituted by equivalent parts from another module, based on the
+  comparison results.
 
 4. **Substitutor**:
-   - Finally, the `substitute` command applies the generated mapping to a given project.
-   - The mapping identifies and replaces API calls, functions, or methods from one
-     module with their equivalents from another, facilitating automatic code
-     transformation.
+
+- Finally, the `substitute` command applies the generated mapping to a given project.
+- The mapping identifies and replaces API calls, functions, or methods from one
+  module with their equivalents from another, facilitating automatic code
+  transformation.
 
 .. graphviz::
 
