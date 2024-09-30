@@ -17,6 +17,9 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
+    "sphinxcontrib.plantuml",
+    "sphinxcontrib.mermaid",
+    "sphinx.ext.graphviz",
 ]
 
 templates_path = ["_templates"]

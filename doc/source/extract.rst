@@ -1,3 +1,5 @@
+.. _extract-cmd:
+
 Extract Command
 ===============
 

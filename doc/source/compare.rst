@@ -1,3 +1,5 @@
+.. _compare-cmd:
+
 Compare Command
 ===============
 

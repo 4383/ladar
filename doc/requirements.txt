@@ -1,2 +1,4 @@
 sphinx==8.0.2
 sphinxcontrib-apidoc==0.5.0
+sphinxcontrib.mermaid==0.9.2
+sphinxcontrib-plantuml==0.30
