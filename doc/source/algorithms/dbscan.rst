@@ -7,7 +7,7 @@ approach. It can identify outliers and group similar structures together.
 Parameters
 ----------
 
-.. autofunction:: ladar.api.algorithms.dbscan..add_arguments
+.. autofunction:: ladar.api.algorithms.dbscan.add_arguments
 
 Usage Example
 -------------
