@@ -73,7 +73,7 @@ def main(args):
     structures = []
     for structure_path in args.structures:
         try:
-            structure = load(structure_path)
+            structure = load(structure_path)["structure"]
             structures.append(structure)
         except Exception as e:
             logger.error(f"Failed to load structure {structure_path}: {e}")

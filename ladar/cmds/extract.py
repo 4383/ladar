@@ -6,7 +6,11 @@ import sys
 import textwrap
 
 import ladar.common.venv as temp_env
-from ladar.api.extract import analyze_stdlib, extract_api_from_module
+from ladar.api.extract import (
+    analyze_stdlib,
+    extract_api_from_module,
+    extract_module_info,
+)
 from ladar.common.io import save
 from ladar.common.package import install_local_dependencies, load_local_module
 from ladar.common.ui import run_with_progress
@@ -184,7 +188,8 @@ def ensure_legacy_compatibility_enabled(legacy_compatibility=False):
 def main(args):
     if args.module == "stdlib":
         logger.info("Analyzing the entire standard library (stdlib).")
-        api_structure = run_with_progress(
+        api_structure = extract_module_info(args.module)
+        api_structure["structure"] = run_with_progress(
             analyze_stdlib,
             include_private=args.include_private,
             description="Analyzing all standard library modules",
@@ -198,7 +203,8 @@ def main(args):
             ):
                 logger.info(f"Analyzing stdlib module: {args.module}")
                 module = __import__(args.module)
-                api_structure = extract_api_from_module(
+                api_structure = extract_module_info(args.module)
+                api_structure["structure"] = extract_api_from_module(
                     module,
                     include_private=args.include_private,
                     include_docstrings=not args.exclude_docstrings,
@@ -210,7 +216,8 @@ def main(args):
                 try:
                     module_name = load_local_module(args.module)
                     module = importlib.import_module(module_name)
-                    api_structure = extract_api_from_module(
+                    api_structure = extract_module_info(args.module)
+                    api_structure["structure"] = extract_api_from_module(
                         module,
                         include_private=args.include_private,
                         include_docstrings=not args.exclude_docstrings,
@@ -238,7 +245,8 @@ def main(args):
                 )
 
                 module = __import__(args.module)
-                api_structure = extract_api_from_module(
+                api_structure = extract_module_info(args.module)
+                api_structure["structure"] = extract_api_from_module(
                     module,
                     include_private=args.include_private,
                     include_docstrings=not args.exclude_docstrings,

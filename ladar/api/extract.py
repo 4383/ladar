@@ -1,8 +1,46 @@
+import importlib
 import inspect
+import json
 import pkgutil
 import sys
+from datetime import datetime
 
 from ladar.api.normalize import normalize_docstring, normalize_value
+
+
+def extract_module_info(module_name):
+    try:
+        module = importlib.import_module(module_name)
+
+        version = getattr(module, "__version__", None)
+
+        if version is None or module_name == "stdlib":
+            if (
+                module_name in sys.builtin_module_names
+                or module.__name__ in sys.modules
+                or module_name == "stdlib"
+            ):
+                version = f"Python stdlib - Python {sys.version}"
+            else:
+                version = "unknown"
+
+        module_info = {
+            "ladar": {
+                "module_name": module_name,
+                "module_version": version,
+                "date": datetime.today().strftime("%Y-%m-%d %H:%M:%S"),
+            }
+        }
+
+        return module_info
+
+    except ModuleNotFoundError:
+        print(f"Module {module_name} non trouvé.")
+        return None
+
+
+# Exemple d'utilisation
+module_info = extract_module_info("os")  # Un module de la stdlib
 
 
 def is_async_function(member):
