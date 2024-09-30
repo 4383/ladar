@@ -107,6 +107,7 @@ minimizes the risk of manual errors, and fosters collaboration within the commun
 
    manifesto.rst
    presentation.rst
+   master-plan.rst
    extract.rst
    normalize.rst
    compare.rst
