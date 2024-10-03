@@ -1,0 +1,29 @@
+ladar:
+  date: '2024-10-01 17:06:41'
+  module_name: eventlet
+  module_version: '0.37.0'
+structure:
+  eventlet.greenpool:
+    docstring: 'GreenPool is a class that manages a pool of green threads.'
+    members:
+      spawn:
+        docstring: 'Spawn a new green thread.'
+        signature: (self, function, *args, **kwargs)
+        type: method
+      waitall:
+        docstring: 'Wait for all green threads to finish.'
+        signature: (self)
+        type: method
+    type: class
+  eventlet.queue:
+    docstring: 'Queue is a class that provides a thread-safe queue implementation.'
+    members:
+      put:
+        docstring: 'Put an item into the queue.'
+        signature: (self, item, block=True, timeout=None)
+        type: method
+      get:
+        docstring: 'Remove and return an item from the queue.'
+        signature: (self, block=True, timeout=None)
+        type: method
+    type: class

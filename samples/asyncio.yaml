@@ -1,0 +1,29 @@
+ladar:
+  date: '2024-10-01 17:06:41'
+  module_name: asyncio
+  module_version: '3.12.5'
+structure:
+  asyncio.eventloop:
+    docstring: 'AbstractEventLoop is the core class for event-driven programming in asyncio.'
+    members:
+      run_forever:
+        docstring: 'Run the event loop until stop() is called.'
+        signature: (self)
+        type: method
+      stop:
+        docstring: 'Stop running the event loop.'
+        signature: (self)
+        type: method
+    type: class
+  asyncio.task:
+    docstring: 'Task is a coroutine wrapper that schedules coroutines in an event loop.'
+    members:
+      create_task:
+        docstring: 'Schedule a coroutine object to be run by the event loop.'
+        signature: (self, coro)
+        type: method
+      cancel:
+        docstring: 'Cancel a running task.'
+        signature: (self)
+        type: method
+    type: class
