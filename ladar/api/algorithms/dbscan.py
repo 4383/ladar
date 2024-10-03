@@ -44,7 +44,8 @@ def add_arguments(parser):
 
 def create_similarity_matrix(elements):
     """
-    Create a similarity matrix based on the Levenshtein distance between elements.
+    Create a similarity matrix based on the Levenshtein distance between
+    element names, signatures, and docstrings.
 
     Args:
         elements (list): List of all elements (from all structures) to compare.
@@ -63,6 +64,7 @@ def create_similarity_matrix(elements):
             if i == j:
                 similarity_matrix[i][j] = 0
             else:
+                # Extract the names, docstrings, and signatures (if available)
                 name_i = (
                     elements[i]["name"]
                     if isinstance(elements[i], dict)
@@ -74,8 +76,36 @@ def create_similarity_matrix(elements):
                     else elements[j]
                 )
 
-                lev_distance = Levenshtein.distance(name_i, name_j)
-                max_length = max(len(name_i), len(name_j))
+                doc_i = (
+                    elements[i].get("docstring", "")
+                    if isinstance(elements[i], dict)
+                    else ""
+                )
+                doc_j = (
+                    elements[j].get("docstring", "")
+                    if isinstance(elements[j], dict)
+                    else ""
+                )
+
+                signature_i = (
+                    elements[i].get("signature", "")
+                    if isinstance(elements[i], dict)
+                    else ""
+                )
+                signature_j = (
+                    elements[j].get("signature", "")
+                    if isinstance(elements[j], dict)
+                    else ""
+                )
+
+                # Combine name, docstring, and signature for similarity calculation
+                combined_i = name_i + " " + signature_i + " " + doc_i
+                combined_j = name_j + " " + signature_j + " " + doc_j
+
+                # Calculate Levenshtein distance between the combined strings
+                lev_distance = Levenshtein.distance(combined_i, combined_j)
+                max_length = max(len(combined_i), len(combined_j))
+
                 if max_length == 0:
                     similarity_matrix[i][j] = 0
                 else:
