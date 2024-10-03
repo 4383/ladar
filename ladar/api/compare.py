@@ -1,70 +1,62 @@
 import concurrent.futures
 import importlib
+import logging
 import os
+import pkgutil
 
+from ladar.api.algorithms.base import AlgorithmCategory, BaseAlgorithm
 from ladar.common.helpers import discover_modules
+
+logger = logging.getLogger(__name__)
 
 
 def load_algorithms():
     """
-    Dynamically load all comparison algorithms from the 'ladar/api/algorithms' directory.
+    Dynamically load and validate all algorithms in the ladar/api/algorithms directory.
 
     Returns:
-        dict: A dictionary of algorithm names mapped to their comparison functions and their argument functions.
+        dict: A dictionary where keys are algorithm names and values are their corresponding classes and categories.
     """
-    algorithms_dir = os.path.dirname(__file__) + "/algorithms"
-    algorithm_modules = discover_modules(algorithms_dir)
-
     algorithms = {}
-    for module_name in algorithm_modules:
+
+    logger.debug("Starting to load algorithms from 'ladar/api/algorithms'")
+
+    for _, module_name, _ in pkgutil.iter_modules(["ladar/api/algorithms"]):
+        logger.debug(f"Attempting to load module: {module_name}")
         try:
             module = importlib.import_module(f"ladar.api.algorithms.{module_name}")
-            if hasattr(module, "compare"):
-                algorithms[module_name] = module
         except ImportError as e:
-            print(f"Failed to import algorithm {module_name}: {e}")
+            logger.debug(f"Error importing module {module_name}: {e}")
+            continue
+
+        # Find the algorithm class in the module, allowing different class names
+        algorithm_class = None
+        for name, cls in vars(module).items():
+            if (
+                isinstance(cls, type)
+                and issubclass(cls, BaseAlgorithm)
+                and cls is not BaseAlgorithm
+            ):
+                algorithm_class = cls
+                break
+
+        if algorithm_class:
+            logger.debug(f"Found algorithm class: {algorithm_class}")
+            if isinstance(algorithm_class.category, AlgorithmCategory):
+                algorithms[module_name] = {
+                    "class": algorithm_class,
+                    "category": algorithm_class.category.value,
+                }
+                logger.debug(
+                    f"Algorithm {module_name} loaded successfully with category: {algorithm_class.category.value}"
+                )
+            else:
+                logger.debug(f"Algorithm {module_name} has an invalid category.")
+        else:
+            logger.debug(f"No valid algorithm class found in module {module_name}.")
+
+    logger.debug(
+        f"Finished loading algorithms. Total algorithms loaded: {len(algorithms)}"
+    )
 
     return algorithms
-
-
-def compare_structures(structures: list, algorithms=None, params=None) -> dict:
-    """
-    Compare multiple API structures using specified algorithms.
-
-    Args:
-        structures (list): A list of API structures to compare.
-        algorithms (list): List of algorithm names to use for comparison. Defaults to all available.
-        params (dict): A dictionary of parameters for each algorithm (e.g., {"dbscan": {"eps": 0.5, "min_samples": 5}}).
-
-    Returns:
-        dict: A dictionary containing the comparison results for each algorithm, including a detailed mapping.
-    """
-    available_algorithms = load_algorithms()
-
-    if algorithms is None:
-        algorithms = available_algorithms.keys()
-
-    results = {}
-
-    def compare_with_algorithm(algorithm):
-        """Compare with a specific algorithm."""
-        algo_params = params.get(algorithm, {}) if params else {}
-        result = available_algorithms[algorithm].compare(structures, algo_params)
-        return algorithm, result
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        future_to_algorithm = {
-            executor.submit(compare_with_algorithm, algo): algo
-            for algo in algorithms
-            if algo in available_algorithms
-        }
-
-        for future in concurrent.futures.as_completed(future_to_algorithm):
-            algorithm = future_to_algorithm[future]
-            try:
-                algo_name, result = future.result()
-                results[algo_name] = result
-            except Exception as e:
-                results[algorithm] = f"Comparison failed with error: {e}"
-
-    return results
