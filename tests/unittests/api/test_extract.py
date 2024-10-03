@@ -265,3 +265,47 @@ def test_extract_api_from_module_without_normalization(mock_module):
         api["MockModule.NestedClass"]["members"]["async_method"]["docstring"]
         == "Asynchronous method."
     ), "Async method docstring should not be converted to lowercase"
+
+
+def test_extract_api_from_module_with_uids(mock_module):
+    """
+    Test that UIDs are generated and included in the extracted API structure.
+
+    Args:
+        mock_module (MockModule): The mock module for testing purposes.
+    """
+    api = extract_api_from_module(
+        mock_module,
+        include_private=True,
+        include_docstrings=True,
+        disable_normalization=True,
+    )
+
+    # Vérifier que NestedClass existe bien dans MockModule et possède un UID
+    assert "MockModule.NestedClass" in api, "NestedClass should be part of the API"
+    assert (
+        "uid" in api["MockModule.NestedClass"]
+    ), "UID should be present for NestedClass"
+
+    # Vérifier que les méthodes ont des UIDs
+    assert (
+        "method" in api["MockModule.NestedClass"]["members"]
+    ), "method should be in NestedClass members"
+    assert (
+        "uid" in api["MockModule.NestedClass"]["members"]["method"]
+    ), "UID should be present for method"
+
+    assert (
+        "async_method" in api["MockModule.NestedClass"]["members"]
+    ), "async_method should be in NestedClass members"
+    assert (
+        "uid" in api["MockModule.NestedClass"]["members"]["async_method"]
+    ), "UID should be present for async_method"
+
+    # Vérifier que __init__ a aussi un UID
+    assert (
+        "__init__" in api["MockModule.NestedClass"]["members"]
+    ), "__init__ should be included in the API"
+    assert (
+        "uid" in api["MockModule.NestedClass"]["members"]["__init__"]
+    ), "UID should be present for __init__"

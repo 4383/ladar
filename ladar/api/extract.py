@@ -3,6 +3,7 @@ import inspect
 import json
 import pkgutil
 import sys
+import uuid
 from datetime import datetime
 
 from ladar.api.normalize import normalize_docstring, normalize_value
@@ -39,8 +40,8 @@ def extract_module_info(module_name):
         return None
 
 
-# Exemple d'utilisation
-module_info = extract_module_info("os")  # Un module de la stdlib
+def generate_uid():
+    return str(uuid.uuid4())
 
 
 def is_async_function(member):
@@ -115,6 +116,8 @@ def extract_api_from_module(
                 continue
             visited.add(id(member))
 
+            uid = generate_uid()
+
             docstring = inspect.getdoc(member) if include_docstrings else None
             # Apply normalization if enabled
             if not disable_normalization:
@@ -135,6 +138,7 @@ def extract_api_from_module(
                 )
                 api_structure[full_name] = {
                     "type": function_type,
+                    "uid": uid,
                 }
                 if signature:
                     api_structure[full_name]["signature"] = signature
@@ -142,7 +146,7 @@ def extract_api_from_module(
                     api_structure[full_name]["docstring"] = docstring
 
             elif inspect.isclass(member):
-                api_structure[full_name] = {"type": "class", "members": {}}
+                api_structure[full_name] = {"type": "class", "uid": uid, "members": {}}
                 if docstring:
                     api_structure[full_name]["docstring"] = docstring
 
@@ -165,8 +169,10 @@ def extract_api_from_module(
                             if not disable_normalization
                             else method_name
                         )
+                        method_uid = generate_uid()
                         api_structure[full_name]["members"][normalized_method_name] = {
                             "type": method_type,
+                            "uid": method_uid,
                         }
                         if signature:
                             api_structure[full_name]["members"][normalized_method_name][
@@ -184,14 +190,15 @@ def extract_api_from_module(
                             ] = method_docstring
 
             elif inspect.ismodule(member):
-                api_structure[full_name] = {"type": "module", "members": {}}
+                api_structure[full_name] = {"type": "module", "uid": uid, "members": {}}
                 if docstring:
                     api_structure[full_name]["docstring"] = docstring
 
                 sub_members = inspect.getmembers(member)
                 explore_members(sub_members, parent_name=full_name, visited=visited)
 
-    # Use the module's name if available, otherwise, use the provided module_name or a default name
+    # Use the module's name if available, otherwise, use the provided module_name or
+    # a default name
     if module_name is None:
         module_name = getattr(module, "__name__", module.__class__.__name__)
 
